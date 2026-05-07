@@ -1,6 +1,7 @@
 ﻿'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseclient'
 
 function FinleafLogo() {
@@ -31,6 +32,13 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('emailConfirmed') === 'true' || searchParams.get('type') === 'signup') {
+      setStatusMessage('Email confirmado com sucesso! Faça login com sua senha.')
+    }
+  }, [searchParams])
 
   const handleSignUp = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -41,6 +49,7 @@ export default function Home() {
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/?emailConfirmed=true`,
         data: {
           full_name: name,
         },
@@ -99,14 +108,14 @@ export default function Home() {
 
     if (error) {
       if (error.message.includes('rate limit') || error.message.includes('Rate limit')) {
-        setStatusMessage('Too many emails have been sent recently. Please wait a few minutes before trying again.')
+        setStatusMessage('Muitos emails enviados recentemente. Aguarde alguns minutos e tente novamente.')
       } else {
         setStatusMessage(error.message)
       }
       return
     }
 
-    setStatusMessage('Recovery email sent! Please check your inbox.')
+    setStatusMessage('Email de recuperação enviado! Verifique sua caixa de entrada.')
   }
 
   return (
