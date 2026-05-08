@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseclient'
 
 function FinleafLogo() {
@@ -25,6 +25,7 @@ function FinleafLogo() {
 }
 
 export default function HomeClient() {
+  const router = useRouter()
   const [isSignUp, setIsSignUp] = useState(true)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -92,6 +93,8 @@ export default function HomeClient() {
 
     setStatusMessage('Login realizado com sucesso! Bem-vindo(a) ao Finleaf.')
     console.log('User signed in:', data.user)
+    router.push('/')
+    router.refresh()
   }
 
   const handleForgotPassword = async () => {
