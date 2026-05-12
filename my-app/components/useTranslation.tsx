@@ -26,6 +26,15 @@ const translations = {
     'dashboard.summary': 'Resumo',
     'dashboard.income': 'Receitas',
     'dashboard.expenses': 'Despesas',
+    'dashboard.investments': 'Investimentos',
+    'dashboard.trendUpLastMonth': '+12.5% no último mês',
+    'dashboard.trendDownPreviousMonth': '-8.3% em relação ao mês anterior',
+    'dashboard.savingsTrend': '+5.2% no último mês',
+    'dashboard.recentHistory': 'Histórico recente',
+    'dashboard.recentHistoryDesc': 'Acompanhe as últimas transações e edite ou remova quando precisar.',
+    'dashboard.allExpenses': 'Todos os gastos',
+    'dashboard.addExpense': '+ Adicionar gasto',
+    'dashboard.selectCategory': 'Selecione uma categoria',
 
     // History
     'history.title': 'Histórico',
@@ -41,6 +50,10 @@ const translations = {
     'history.lastWeek': 'Última semana',
     'history.lastMonth': 'Último mês',
     'history.export': 'Exportar CSV',
+    'history.save': 'Salvar',
+    'history.cancel': 'Cancelar',
+    'history.edit': 'Editar',
+    'history.delete': 'Apagar',
 
     // Goals
     'goals.title': 'Metas',
@@ -52,12 +65,26 @@ const translations = {
     'goals.deadline': 'Prazo',
     'goals.addGoal': 'Adicionar meta',
     'goals.adjust': 'Ajustar contribuição',
+    'goals.active': 'Meta ativa',
+    'goals.activeDesc': 'Adicione contribuições mensais ou retire quando precisar.',
+    'goals.averageProgress': 'Progresso médio',
+    'goals.deadlineLabel': 'Prazo',
+    'goals.customAmount': 'Valor personalizado',
+    'goals.addFunds': '+ Adicionar',
+    'goals.withdrawFunds': '- Retirar',
+    'goals.save': 'Salvar',
+    'goals.cancel': 'Cancelar',
+    'goals.edit': 'Editar',
+    'goals.remove': 'Remover',
+    'goals.createGoal': 'Criar meta',
 
     // Profile
     'profile.title': 'Perfil',
     'profile.subtitle': 'Ajustes de moeda e conta',
     'profile.personalize': 'Personalize seu perfil financeiro',
+    'profile.name': 'Nome',
     'profile.currency': 'Moeda',
+    'profile.dollar': 'Dólar',
     'profile.income': 'Renda mensal',
     'profile.payday': 'Dia de recebimento',
     'profile.bonus': 'Bônus mensal',
@@ -72,6 +99,7 @@ const translations = {
     'profile.account': 'Conta',
     'profile.accountDesc': 'Gerencie sua conta e sessões.',
     'profile.logout': 'Fazer logout',
+    'profile.loggingOut': 'A sair...',
 
     // Modals
     'modal.add': 'Adicionar Transação',
@@ -107,6 +135,8 @@ const translations = {
     'messages.passwordMismatch': 'As senhas não coincidem. Por favor, verifique.',
     'messages.success': 'Configurações atualizadas com sucesso!',
     'messages.logout': 'Logout realizado com sucesso!',
+    'notes.goalContribution': 'Contribuição para meta',
+    'notes.goalWithdrawal': 'Retirada da meta',
   },
   en: {
     // Navigation
@@ -133,6 +163,15 @@ const translations = {
     'dashboard.summary': 'Summary',
     'dashboard.income': 'Income',
     'dashboard.expenses': 'Expenses',
+    'dashboard.investments': 'Investments',
+    'dashboard.trendUpLastMonth': '+12.5% last month',
+    'dashboard.trendDownPreviousMonth': '-8.3% compared with previous month',
+    'dashboard.savingsTrend': '+5.2% last month',
+    'dashboard.recentHistory': 'Recent history',
+    'dashboard.recentHistoryDesc': 'Track your latest transactions and edit or remove them when needed.',
+    'dashboard.allExpenses': 'All expenses',
+    'dashboard.addExpense': '+ Add expense',
+    'dashboard.selectCategory': 'Select a category',
 
     // History
     'history.title': 'History',
@@ -148,6 +187,10 @@ const translations = {
     'history.lastWeek': 'Last week',
     'history.lastMonth': 'Last month',
     'history.export': 'Export CSV',
+    'history.save': 'Save',
+    'history.cancel': 'Cancel',
+    'history.edit': 'Edit',
+    'history.delete': 'Delete',
 
     // Goals
     'goals.title': 'Goals',
@@ -159,12 +202,26 @@ const translations = {
     'goals.deadline': 'Deadline',
     'goals.addGoal': 'Add goal',
     'goals.adjust': 'Adjust contribution',
+    'goals.active': 'Active goal',
+    'goals.activeDesc': 'Add monthly contributions or withdraw funds when needed.',
+    'goals.averageProgress': 'Average progress',
+    'goals.deadlineLabel': 'Deadline',
+    'goals.customAmount': 'Custom amount',
+    'goals.addFunds': '+ Add',
+    'goals.withdrawFunds': '- Withdraw',
+    'goals.save': 'Save',
+    'goals.cancel': 'Cancel',
+    'goals.edit': 'Edit',
+    'goals.remove': 'Remove',
+    'goals.createGoal': 'Create goal',
 
     // Profile
     'profile.title': 'Profile',
     'profile.subtitle': 'Currency and account settings',
     'profile.personalize': 'Personalize your financial profile',
+    'profile.name': 'Name',
     'profile.currency': 'Currency',
+    'profile.dollar': 'Dollar',
     'profile.income': 'Monthly income',
     'profile.payday': 'Payday',
     'profile.bonus': 'Monthly bonus',
@@ -179,6 +236,7 @@ const translations = {
     'profile.account': 'Account',
     'profile.accountDesc': 'Manage your account and sessions.',
     'profile.logout': 'Log out',
+    'profile.loggingOut': 'Logging out...',
 
     // Modals
     'modal.add': 'Add Transaction',
@@ -214,6 +272,8 @@ const translations = {
     'messages.passwordMismatch': 'Passwords do not match. Please check.',
     'messages.success': 'Settings updated successfully!',
     'messages.logout': 'Logged out successfully!',
+    'notes.goalContribution': 'Goal contribution',
+    'notes.goalWithdrawal': 'Goal withdrawal',
   },
 }
 
@@ -224,5 +284,24 @@ export function useTranslation() {
     return translations[currentLanguage][key as keyof typeof translations.pt] || key
   }
 
-  return { t }
+  const translateNote = (note?: string): string | undefined => {
+    if (!note) {
+      return undefined
+    }
+
+    const contributionPrefix = 'Contribuição para meta: '
+    const withdrawalPrefix = 'Retirada da meta: '
+
+    if (note.startsWith(contributionPrefix)) {
+      return `${t('notes.goalContribution')}: ${note.slice(contributionPrefix.length)}`
+    }
+
+    if (note.startsWith(withdrawalPrefix)) {
+      return `${t('notes.goalWithdrawal')}: ${note.slice(withdrawalPrefix.length)}`
+    }
+
+    return note
+  }
+
+  return { t, translateNote }
 }

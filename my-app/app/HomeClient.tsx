@@ -53,7 +53,7 @@ export default function HomeClient() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/?emailConfirmed=true`,
+        emailRedirectTo: `${window.location.origin}/login?emailConfirmed=true`,
         data: {
           full_name: name,
         },

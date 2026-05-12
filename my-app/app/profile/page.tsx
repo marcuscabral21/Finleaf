@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import NavigationLayout from '@/components/NavigationLayout'
 import { useFinance } from '@/components/FinanceProvider'
 import { useLanguage } from '@/components/LanguageProvider'
@@ -11,21 +10,43 @@ import { supabase } from '@/lib/supabaseclient'
 type Language = 'pt' | 'en' | 'auto'
 
 export default function Page() {
-  const router = useRouter()
-  const { currency, income, bonus, payday, setCurrency, setIncome, setBonus, setPayday } = useFinance()
+  const { user, currency, income, bonus, payday, setCurrency, setIncome, setBonus, setPayday } = useFinance()
   const { language, setLanguage } = useLanguage()
   const { t } = useTranslation()
+  const [name, setName] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-  function handleSave(event: React.FormEvent<HTMLFormElement>) {
+  const profileName = name ?? user?.user_metadata?.full_name ?? ''
+
+  async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (password && password !== confirmPassword) {
       setMessage(t('messages.passwordMismatch'))
       return
     }
+
+    const updates: Parameters<typeof supabase.auth.updateUser>[0] = {
+      data: {
+        full_name: profileName.trim(),
+      },
+    }
+
+    if (password) {
+      updates.password = password
+    }
+
+    const { error } = await supabase.auth.updateUser(updates)
+
+    if (error) {
+      setMessage(error.message)
+      return
+    }
+
+    setPassword('')
+    setConfirmPassword('')
     setMessage(t('messages.success'))
   }
 
@@ -42,8 +63,7 @@ export default function Page() {
       return
     }
 
-    router.push('/login')
-    router.refresh()
+    window.location.replace('/login')
   }
 
   return (
@@ -61,7 +81,15 @@ export default function Page() {
           </div>
 
           <form className="mt-8 grid gap-5" onSubmit={handleSave}>
-            <div className="grid gap-4 sm:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-5">
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                {t('profile.name')}
+                <input
+                  value={profileName}
+                  onChange={(event) => setName(event.target.value)}
+                  className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                />
+              </label>
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
                 {t('profile.currency')}
                 <select
@@ -70,7 +98,7 @@ export default function Page() {
                   className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                 >
                   <option value="BRL">Real (BRL)</option>
-                  <option value="USD">Dólar (USD)</option>
+                  <option value="USD">{t('profile.dollar')} (USD)</option>
                   <option value="EUR">Euro (EUR)</option>
                 </select>
               </label>
@@ -173,7 +201,7 @@ export default function Page() {
               disabled={isLoggingOut}
               className="rounded-full border border-rose-200 bg-rose-50 px-6 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-400 dark:hover:bg-rose-900"
             >
-              {isLoggingOut ? 'A sair...' : t('profile.logout')}
+              {isLoggingOut ? t('profile.loggingOut') : t('profile.logout')}
             </button>
           </div>
         </section>

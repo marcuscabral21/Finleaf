@@ -6,10 +6,10 @@ import { useFinance, CATEGORIES, getCategoryTranslationKey } from '@/components/
 import { useTranslation } from '@/components/useTranslation'
 
 const categories = [
-  { key: 'house', labelKey: 'dashboard.category.house', color: 'bg-emerald-500', amount: 540, percent: 28, descriptionKey: 'dashboard.category.houseDesc' },
-  { key: 'shopping', labelKey: 'dashboard.category.shopping', color: 'bg-sky-500', amount: 210, percent: 11, descriptionKey: 'dashboard.category.shoppingDesc' },
-  { key: 'transport', labelKey: 'dashboard.category.transport', color: 'bg-violet-500', amount: 185, percent: 10, descriptionKey: 'dashboard.category.transportDesc' },
-  { key: 'leisure', labelKey: 'dashboard.category.leisure', color: 'bg-amber-500', amount: 95, percent: 5, descriptionKey: 'dashboard.category.leisureDesc' },
+  { key: 'house', labelKey: 'dashboard.category.house', color: 'bg-emerald-500', categoryNames: ['Contas'], descriptionKey: 'dashboard.category.houseDesc' },
+  { key: 'shopping', labelKey: 'dashboard.category.shopping', color: 'bg-sky-500', categoryNames: ['Alimentacao', 'Outros'], descriptionKey: 'dashboard.category.shoppingDesc' },
+  { key: 'transport', labelKey: 'dashboard.category.transport', color: 'bg-violet-500', categoryNames: ['Transporte'], descriptionKey: 'dashboard.category.transportDesc' },
+  { key: 'leisure', labelKey: 'dashboard.category.leisure', color: 'bg-amber-500', categoryNames: ['Entretenimento'], descriptionKey: 'dashboard.category.leisureDesc' },
 ]
 
 export default function Page() {
@@ -22,8 +22,8 @@ export default function Page() {
     date: new Date().toISOString().split('T')[0],
     type: 'expense' as 'income' | 'expense',
   })
-  const { transactions, formatAmount, addTransaction, updateTransaction, deleteTransaction } = useFinance()
-  const { t } = useTranslation()
+  const { transactions, goals, formatAmount, addTransaction, updateTransaction, deleteTransaction } = useFinance()
+  const { t, translateNote } = useTranslation()
 
   const totalIncome = useMemo(
     () => transactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
@@ -36,8 +36,24 @@ export default function Page() {
   )
 
   const availableBalance = totalIncome - totalExpenses
-  const savings = 543.0
-  const selectedCategory = categories.find((category) => category.key === activeCategory) ?? categories[0]
+  const savings = useMemo(() => goals.reduce((sum, goal) => sum + goal.current, 0), [goals])
+  const investments = 0
+  const dashboardCategories = useMemo(
+    () =>
+      categories.map((category) => {
+        const amount = transactions
+          .filter((transaction) => transaction.type === 'expense' && category.categoryNames.includes(transaction.category))
+          .reduce((sum, transaction) => sum + transaction.amount, 0)
+
+        return {
+          ...category,
+          amount,
+          percent: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100) : 0,
+        }
+      }),
+    [totalExpenses, transactions]
+  )
+  const selectedCategory = dashboardCategories.find((category) => category.key === activeCategory) ?? dashboardCategories[0]
 
   function openAddModal() {
     setEditingTransaction(null)
@@ -94,19 +110,19 @@ export default function Page() {
           <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
             <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.available')}</p>
             <p className="mt-4 text-3xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(availableBalance)}</p>
-            <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">+12.5% no último mês</p>
+            <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{t('dashboard.trendUpLastMonth')}</p>
           </div>
 
           <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
             <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.spent')}</p>
             <p className="mt-4 text-3xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(totalExpenses)}</p>
-            <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">-8.3% em relação ao mês anterior</p>
+            <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">{t('dashboard.trendDownPreviousMonth')}</p>
           </div>
 
           <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
             <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.savings')}</p>
             <p className="mt-4 text-3xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(savings)}</p>
-            <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">+5.2% no último mês</p>
+            <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{t('dashboard.savingsTrend')}</p>
           </div>
         </div>
 
@@ -125,7 +141,7 @@ export default function Page() {
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {categories.map((category) => (
+              {dashboardCategories.map((category) => (
                 <button
                   key={category.key}
                   type="button"
@@ -157,8 +173,8 @@ export default function Page() {
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{formatAmount(totalExpenses)}</span>
               </div>
               <div className="flex items-center justify-between rounded-3xl bg-slate-50 p-4 dark:bg-slate-900/80">
-                <span>Investimentos</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{formatAmount(790)}</span>
+                <span>{t('dashboard.investments')}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{formatAmount(investments)}</span>
               </div>
             </dl>
           </div>
@@ -167,11 +183,11 @@ export default function Page() {
         <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Histórico recente</p>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Acompanhe as últimas transações e edite ou remova quando precisar.</p>
+              <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.recentHistory')}</p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('dashboard.recentHistoryDesc')}</p>
             </div>
             <button type="button" className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
-              Todos os gastos
+              {t('dashboard.allExpenses')}
             </button>
           </div>
 
@@ -183,6 +199,7 @@ export default function Page() {
                   <div>
                     <p className="font-semibold text-slate-900 dark:text-slate-100">{t(getCategoryTranslationKey(item.category))}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">{item.date}</p>
+                    {item.notes ? <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{translateNote(item.notes)}</p> : null}
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-4 sm:w-72">
@@ -193,14 +210,14 @@ export default function Page() {
                       onClick={() => openEditModal(item.id)}
                       className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
-                      Editar
+                      {t('history.edit')}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(item.id)}
                       className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-400"
                     >
-                      Remover
+                      {t('goals.remove')}
                     </button>
                   </div>
                 </div>
@@ -215,7 +232,7 @@ export default function Page() {
             onClick={openAddModal}
             className="rounded-full bg-emerald-500 px-6 py-4 text-sm font-semibold text-white shadow-xl shadow-emerald-500/20 transition hover:bg-emerald-400"
           >
-            + Adicionar gasto
+            {t('dashboard.addExpense')}
           </button>
         </div>
 
@@ -233,7 +250,7 @@ export default function Page() {
                     onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
                     className="mt-1 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                   >
-                    <option value="">Selecione uma categoria</option>
+                    <option value="">{t('dashboard.selectCategory')}</option>
                     {CATEGORIES.map((category) => (
                       <option key={category.name} value={category.name}>
                         {category.icon} {t(getCategoryTranslationKey(category.name))}

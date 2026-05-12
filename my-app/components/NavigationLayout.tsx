@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
+import { useFinance } from './FinanceProvider'
 import { useTranslation } from './useTranslation'
 
 const navItems = [
@@ -21,6 +22,9 @@ interface NavigationLayoutProps {
 export default function NavigationLayout({ title, subtitle, children }: NavigationLayoutProps) {
   const pathname = usePathname()
   const { t } = useTranslation()
+  const { user, loading } = useFinance()
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Conta'
+  const displayInitial = displayName.charAt(0).toUpperCase()
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -69,9 +73,9 @@ export default function NavigationLayout({ title, subtitle, children }: Navigati
               </div>
 
               <Link href="/profile" className="flex items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm transition hover:border-emerald-300 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white">M</div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white">{loading ? '...' : displayInitial}</div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Marcus</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{loading ? 'A carregar' : displayName}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{t('nav.profile')}</p>
                 </div>
               </Link>
