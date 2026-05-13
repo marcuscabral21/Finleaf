@@ -59,7 +59,7 @@ input[type="month"]::-webkit-calendar-picker-indicator,
 .dark input[type="date"]::-webkit-calendar-picker-indicator,
 .dark input[type="month"]::-webkit-calendar-picker-indicator,
 .dark .date-picker-input::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(1.8);
+  filter: invert(1) brightness(2) ;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -72,7 +72,7 @@ input[type="month"]::-webkit-calendar-picker-indicator,
   input[type="date"]::-webkit-calendar-picker-indicator,
   input[type="month"]::-webkit-calendar-picker-indicator,
   .date-picker-input::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(1.8);
+    filter: none;
   }
 }
 
