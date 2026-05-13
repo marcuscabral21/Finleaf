@@ -21,13 +21,11 @@ export default function Page() {
     amount: '',
     date: new Date().toISOString().split('T')[0],
     type: 'expense' as 'income' | 'expense',
+    notes: '',
   })
   const { transactions, goals, formatAmount, addTransaction, updateTransaction, deleteTransaction } = useFinance()
   const { t, translateNote } = useTranslation()
-  const transactionCategories = useMemo(
-    () => (CATEGORIES.some((category) => category.name === 'Investimentos') ? CATEGORIES : [...CATEGORIES, { name: 'Investimentos', icon: 'INV' }]),
-    []
-  )
+  const transactionCategories = CATEGORIES
 
   const totalIncome = useMemo(
     () => transactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
@@ -72,6 +70,7 @@ export default function Page() {
       amount: '',
       date: new Date().toISOString().split('T')[0],
       type: 'expense',
+      notes: '',
     })
     setIsModalOpen(true)
   }
@@ -85,6 +84,7 @@ export default function Page() {
       amount: transaction.amount.toString(),
       date: transaction.date,
       type: transaction.type,
+      notes: transaction.notes ?? '',
     })
     setIsModalOpen(true)
   }
@@ -97,6 +97,7 @@ export default function Page() {
         amount: Number(formData.amount),
         date: formData.date,
         type: formData.type,
+        notes: formData.notes.trim() || undefined,
       })
     } else {
       addTransaction({
@@ -104,6 +105,7 @@ export default function Page() {
         amount: Number(formData.amount),
         date: formData.date,
         type: formData.type,
+        notes: formData.notes.trim() || undefined,
       })
     }
     setIsModalOpen(false)
@@ -116,47 +118,49 @@ export default function Page() {
   return (
     <NavigationLayout title={t('dashboard.title')} subtitle={t('dashboard.subtitle')}>
       <div className="grid gap-6">
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.available')}</p>
-            <p className="mt-4 text-3xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(availableBalance)}</p>
+        <div className="grid gap-4 md:grid-cols-3 lg:gap-6">
+          <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.available')}</p>
+            <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-3xl">{formatAmount(availableBalance)}</p>
             <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{t('dashboard.trendUpLastMonth')}</p>
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.spent')}</p>
-            <p className="mt-4 text-3xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(totalExpenses)}</p>
+          <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.spent')}</p>
+            <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-3xl">{formatAmount(totalExpenses)}</p>
             <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">{t('dashboard.trendDownPreviousMonth')}</p>
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.savings')}</p>
-            <p className="mt-4 text-3xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(savings)}</p>
+          <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.savings')}</p>
+            <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-3xl">{formatAmount(savings)}</p>
             <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{t('dashboard.savingsTrend')}</p>
           </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.55fr_0.95fr]">
-          <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
+          <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.categories')}</p>
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.categories')}</p>
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t('dashboard.categoriesDesc')}</p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
                 <p className="font-semibold">{t(selectedCategory.labelKey)}</p>
-                <p className="mt-1 text-3xl font-semibold">{formatAmount(selectedCategory.amount)}</p>
+                <p className="mt-1 text-2xl font-semibold sm:text-3xl">{formatAmount(selectedCategory.amount)}</p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t(selectedCategory.descriptionKey)}</p>
               </div>
             </div>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 lg:grid-cols-4">
               {dashboardCategories.map((category) => (
                 <button
                   key={category.key}
                   type="button"
                   onMouseEnter={() => setActiveCategory(category.key)}
-                  className={`rounded-3xl border px-4 py-5 text-left transition ${
+                  onFocus={() => setActiveCategory(category.key)}
+                  onClick={() => setActiveCategory(category.key)}
+                  className={`rounded-3xl border px-4 py-4 text-left transition sm:py-5 ${
                     activeCategory === category.key
                       ? 'border-emerald-500/40 bg-emerald-50 dark:border-emerald-400/20 dark:bg-emerald-500/10'
                       : 'border-slate-200 bg-white/95 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950/80 dark:hover:border-slate-700 dark:hover:bg-slate-900'
@@ -164,25 +168,25 @@ export default function Page() {
                 >
                   <div className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${category.color} text-white`} />
                   <p className="mt-4 text-sm font-semibold text-slate-900 dark:text-slate-100">{t(category.labelKey)}</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(category.amount)}</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{category.percent}% do total</p>
+                  <p className="mt-2 text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">{formatAmount(category.amount)}</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{category.percent}% {t('dashboard.ofTotal')}</p>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.summary')}</p>
+          <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.summary')}</p>
             <dl className="mt-6 space-y-5 text-sm text-slate-600 dark:text-slate-300">
-              <div className="flex items-center justify-between rounded-3xl bg-slate-50 p-4 dark:bg-slate-900/80">
+              <div className="flex items-center justify-between gap-3 rounded-3xl bg-slate-50 p-4 dark:bg-slate-900/80">
                 <span>{t('dashboard.income')}</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{formatAmount(totalIncome)}</span>
               </div>
-              <div className="flex items-center justify-between rounded-3xl bg-slate-50 p-4 dark:bg-slate-900/80">
+              <div className="flex items-center justify-between gap-3 rounded-3xl bg-slate-50 p-4 dark:bg-slate-900/80">
                 <span>{t('dashboard.expenses')}</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{formatAmount(totalExpenses)}</span>
               </div>
-              <div className="flex items-center justify-between rounded-3xl bg-slate-50 p-4 dark:bg-slate-900/80">
+              <div className="flex items-center justify-between gap-3 rounded-3xl bg-slate-50 p-4 dark:bg-slate-900/80">
                 <span>{t('dashboard.investments')}</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{formatAmount(investments)}</span>
               </div>
@@ -190,13 +194,13 @@ export default function Page() {
           </div>
         </div>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
+        <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('dashboard.recentHistory')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.recentHistory')}</p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('dashboard.recentHistoryDesc')}</p>
             </div>
-            <button type="button" className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
+            <button type="button" className="w-full rounded-full bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto sm:py-2">
               {t('dashboard.allExpenses')}
             </button>
           </div>
@@ -212,9 +216,9 @@ export default function Page() {
                     {item.notes ? <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{translateNote(item.notes)}</p> : null}
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-4 sm:w-72">
+                <div className="flex flex-col gap-3 sm:w-72 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{item.type === 'expense' ? '-' : '+'} {formatAmount(item.amount)}</p>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:flex">
                     <button
                       type="button"
                       onClick={() => openEditModal(item.id)}
@@ -240,15 +244,15 @@ export default function Page() {
           <button
             type="button"
             onClick={openAddModal}
-            className="rounded-full bg-emerald-500 px-6 py-4 text-sm font-semibold text-white shadow-xl shadow-emerald-500/20 transition hover:bg-emerald-400"
+            className="w-full rounded-full bg-emerald-500 px-6 py-4 text-sm font-semibold text-white shadow-xl shadow-emerald-500/20 transition hover:bg-emerald-400 sm:w-auto"
           >
             {t('dashboard.addExpense')}
           </button>
         </div>
 
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-950">
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center">
+            <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-800 dark:bg-slate-950 sm:p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 {editingTransaction ? t('modal.edit') : t('modal.add')}
               </h3>
@@ -297,6 +301,15 @@ export default function Page() {
                     <option value="expense">{t('modal.expense')}</option>
                     <option value="income">{t('modal.income')}</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t('modal.comment')}</label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                    className="mt-1 min-h-24 w-full resize-none rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                    placeholder={t('modal.commentPlaceholder')}
+                  />
                 </div>
               </div>
               <div className="mt-6 flex gap-3">

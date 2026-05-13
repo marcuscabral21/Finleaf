@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import StatusToast, { type StatusVariant } from '@/components/StatusToast'
 import { supabase } from '@/lib/supabaseclient'
@@ -33,17 +34,17 @@ function EyeIcon({ hidden }: { hidden: boolean }) {
 
 function FinleafLogo() {
   return (
-    <div className="mb-8 flex items-center gap-3 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-      <div className="inline-flex h-20 items-center justify-center gap-3">
+    <div className="mb-4 flex items-center gap-3 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:mb-8">
+      <div className="inline-flex h-16 items-center justify-center gap-2 sm:h-20 sm:gap-3">
         {/* Dark theme: WhiteFinleaf + WhitePlant */}
         <div className="hidden dark:flex dark:items-center dark:gap-3">
-          <img src="/WhiteFinleaf.svg" alt="Finleaf logo" className="h-20 w-28 object-contain" />
-          <img src="/WhitePlant.svg" alt="Plant" className="h-16 w-16 object-contain" />
+          <Image src="/WhiteFinleaf.svg" alt="Finleaf logo" width={112} height={80} className="h-16 w-24 object-contain sm:h-20 sm:w-28" priority />
+          <Image src="/WhitePlant.svg" alt="Plant" width={64} height={64} className="h-12 w-12 object-contain sm:h-16 sm:w-16" priority />
         </div>
         {/* Light theme: same white SVGs inverted to black for identical weight */}
         <div className="flex items-center gap-3 dark:hidden">
-          <img src="/WhiteFinleaf.svg" alt="Finleaf logo" className="h-20 w-28 object-contain filter invert" />
-          <img src="/WhitePlant.svg" alt="Plant" className="h-16 w-16 object-contain filter invert" />
+          <Image src="/WhiteFinleaf.svg" alt="Finleaf logo" width={112} height={80} className="h-16 w-24 object-contain filter invert sm:h-20 sm:w-28" priority />
+          <Image src="/WhitePlant.svg" alt="Plant" width={64} height={64} className="h-12 w-12 object-contain filter invert sm:h-16 sm:w-16" priority />
         </div>
       </div>
 
@@ -173,18 +174,18 @@ export default function HomeClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_26%)] px-4 py-8 text-slate-900 dark:text-slate-100">
-      <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-8">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_26%)] px-3 py-4 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-8">
+      <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-5 sm:gap-8">
         <header className="flex flex-col gap-3">
           <FinleafLogo />
         </header>
 
-        <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white/85 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90">
+        <div className="relative overflow-hidden rounded-[26px] border border-slate-200 bg-white/85 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px]">
           <div className={`flex w-[200%] transition-transform duration-700 ease-in-out ${isSignUp ? 'translate-x-0' : '-translate-x-1/2'}`}>
             {/* Sign Up View */}
             <div className="basis-1/2 shrink-0 flex">
               {/* Form Section (2/3) */}
-              <section className="w-2/3 flex flex-col justify-center gap-6 px-8 py-14 sm:px-12 md:px-14">
+              <section className="flex w-full flex-col justify-center gap-6 px-4 py-8 sm:px-8 sm:py-10 md:w-2/3 md:px-14 md:py-14">
                 <div>
                   <p className="text-lg font-semibold">Create Account</p>
                   <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">Start your journey with Finleaf and track your financial habits right away.</p>
@@ -242,14 +243,21 @@ export default function HomeClient() {
                   >
                     {loading ? 'Criando...' : 'Sign Up'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(false)}
+                    className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900 md:hidden"
+                  >
+                    Sign In
+                  </button>
                 </form>
               </section>
 
               {/* CTA Section (1/3) */}
-              <section className="relative w-1/3 flex flex-col justify-center gap-6 bg-gradient-to-br from-slate-400 to-slate-500 dark:from-slate-600 dark:to-slate-700 px-8 py-14 text-white sm:px-8 md:px-10">
+              <section className="relative hidden w-1/3 flex-col justify-center gap-6 bg-gradient-to-br from-slate-400 to-slate-500 px-8 py-14 text-white dark:from-slate-600 dark:to-slate-700 md:flex md:px-10">
                 {/* Plant Logo */}
                 <div className="absolute top-6 left-6">
-                  <img src="/WhitePlant.svg" alt="Plant" className="h-12 w-12 object-contain filter invert dark:filter-none" />
+                  <Image src="/WhitePlant.svg" alt="Plant" width={48} height={48} className="h-12 w-12 object-contain filter invert dark:filter-none" />
                 </div>
                 <div>
                   <p className="text-lg font-semibold">Welcome Back</p>
@@ -268,7 +276,7 @@ export default function HomeClient() {
             {/* Sign In View */}
             <div className="basis-1/2 shrink-0 flex">
               {/* Form Section (2/3) */}
-              <section className="w-2/3 flex flex-col justify-center gap-6 px-8 py-14 sm:px-12 md:px-14">
+              <section className="flex w-full flex-col justify-center gap-6 px-4 py-8 sm:px-8 sm:py-10 md:w-2/3 md:px-14 md:py-14">
                 <div>
                   <p className="text-lg font-semibold">Sign In</p>
                   <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">Use your Supabase credentials to access your account and manage your finance dashboard.</p>
@@ -324,14 +332,21 @@ export default function HomeClient() {
                   >
                     {loading ? 'Logging in...' : 'Sign In'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(true)}
+                    className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900 md:hidden"
+                  >
+                    Sign Up
+                  </button>
                 </form>
               </section>
 
               {/* CTA Section (1/3) */}
-              <section className="relative w-1/3 flex flex-col justify-center gap-6 bg-gradient-to-br from-slate-400 to-slate-500 dark:from-slate-600 dark:to-slate-700 px-8 py-14 text-white sm:px-8 md:px-10">
+              <section className="relative hidden w-1/3 flex-col justify-center gap-6 bg-gradient-to-br from-slate-400 to-slate-500 px-8 py-14 text-white dark:from-slate-600 dark:to-slate-700 md:flex md:px-10">
                 {/* Plant Logo */}
                 <div className="absolute top-6 left-6">
-                  <img src="/WhitePlant.svg" alt="Plant" className="h-12 w-12 object-contain filter invert dark:filter-none" />
+                  <Image src="/WhitePlant.svg" alt="Plant" width={48} height={48} className="h-12 w-12 object-contain filter invert dark:filter-none" />
                 </div>
                 <div>
                   <p className="text-lg font-semibold">Don&apos;t have an account?</p>
@@ -357,7 +372,7 @@ export default function HomeClient() {
           />
         ) : null}
 
-        <footer className="fixed bottom-6 right-6 flex gap-6">
+        <footer className="flex justify-center gap-6 py-2 sm:fixed sm:bottom-6 sm:right-6 sm:py-0">
           <a href="mailto:marcusdavicabral2101@gmail.com" className="text-slate-900 dark:text-white hover:opacity-70 transition">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />

@@ -11,6 +11,7 @@ export type Transaction = {
   icon: string
   category: string
   categoryId?: string | null
+  createdAt?: string
   date: string
   amount: number
   type: 'income' | 'expense'
@@ -68,6 +69,7 @@ type DbTransaction = {
   notes: string | null
   type: 'income' | 'expense'
   transaction_date: string | null
+  created_at: string | null
   categories: DbCategory | null
 }
 
@@ -91,6 +93,7 @@ export const CATEGORIES = [
   { name: 'Saude', icon: '🏥' },
   { name: 'Educacao', icon: '📚' },
   { name: 'Contas', icon: '💡' },
+  { name: 'Investimentos', icon: '📈' },
   { name: 'Renda', icon: '💰' },
   { name: 'Transporte', icon: '🚗' },
   { name: 'Outros', icon: '📦' },
@@ -106,7 +109,7 @@ const defaultProfileSettings = {
 
 function getCategoryIcon(category: string) {
   if (category === 'Investimentos') {
-    return 'INV'
+    return '📈'
   }
 
   const categoryMap = CATEGORIES.reduce((map, cat) => {
@@ -137,6 +140,10 @@ function normalizeCategoryIcon(category: string, icon?: string | null) {
     MdStar: '⭐',
     MdCategory: '📦',
     MdInventory: '📦',
+    MdTrendingUp: '📈',
+    MdShowChart: '📈',
+    MdTimeline: '📈',
+    MdBarChart: '📊',
   }
 
   if (!icon) {
@@ -311,6 +318,7 @@ function mapTransaction(row: DbTransaction): Transaction {
     icon: normalizeCategoryIcon(categoryName, row.categories?.icon_light),
     category: categoryName,
     date: row.transaction_date ?? new Date().toISOString().split('T')[0],
+    createdAt: row.created_at ?? undefined,
     amount: Number(row.amount),
     type: row.type,
     notes: row.notes ?? undefined,
@@ -327,6 +335,15 @@ function mapGoal(row: DbGoal): Goal {
     deadline: row.deadline ?? '',
     color: getCategoryColor(row.color_light),
   }
+}
+
+function compareTransactionsNewestFirst(first: Transaction, second: Transaction) {
+  const dateCompare = second.date.localeCompare(first.date)
+  if (dateCompare !== 0) {
+    return dateCompare
+  }
+
+  return (second.createdAt ?? '').localeCompare(first.createdAt ?? '')
 }
 
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
@@ -357,9 +374,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       supabase.from('categories').select('id,name,icon_light,icon_dark,color_light,color_dark').or(`user_id.eq.${currentUser.id},user_id.is.null`),
       supabase
         .from('transactions')
-        .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+        .select('id,category_id,amount,description,notes,type,transaction_date,created_at,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
         .eq('user_id', currentUser.id)
-        .order('transaction_date', { ascending: false }),
+        .order('transaction_date', { ascending: false })
+        .order('created_at', { ascending: false }),
       supabase
         .from('goals')
         .select('id,name,target_amount,current_amount,deadline,color_light')
@@ -519,7 +537,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           transaction_date: scheduledDateText,
           notes: monthlyIncomeNote,
         })
-        .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+        .select('id,category_id,amount,description,notes,type,transaction_date,created_at,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
         .single()
 
       if (!error && data) {
@@ -610,7 +628,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           description: 'Investimentos',
           notes: monthlyInvestmentNote,
         })
-        .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+        .select('id,category_id,amount,description,notes,type,transaction_date,created_at,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
         .single()
 
       if (!error && data) {
@@ -676,6 +694,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       id: tempId,
       categoryId: category?.id ?? null,
       icon: normalizeCategoryIcon(transaction.category, category?.icon_light),
+      createdAt: new Date().toISOString(),
     }
     setTransactions((current) => [optimisticTransaction, ...current])
 
@@ -690,7 +709,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         transaction_date: transaction.date,
         notes: transaction.notes ?? null,
       })
-      .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+      .select('id,category_id,amount,description,notes,type,transaction_date,created_at,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
       .single()
       .then(({ data, error }) => {
         if (error || !data) {
@@ -727,7 +746,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         description: updates.category,
         type: updates.type,
         transaction_date: updates.date,
-        notes: updates.notes,
+        notes: Object.hasOwn(updates, 'notes') ? updates.notes ?? null : undefined,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -849,7 +868,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       const today = new Date().toISOString().split('T')[0]
       const transactionType = amount > 0 ? 'expense' : 'income'
       const category = categories.find((item) => item.name === 'Outros')
-      const notes = amount > 0 ? `Contribuição para meta: ${currentGoal.name}` : `Retirada da meta: ${currentGoal.name}`
+      const notes = amount > 0 ? `finleaf-goal-contribution:${currentGoal.name}` : `finleaf-goal-withdrawal:${currentGoal.name}`
 
       const { data: updatedGoal, error: goalError } = await supabase
         .from('goals')
@@ -887,7 +906,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           transaction_date: today,
           notes,
         })
-        .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+        .select('id,category_id,amount,description,notes,type,transaction_date,created_at,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
         .single()
 
       if (!transactionError && data) {
@@ -935,6 +954,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currency])
 
+  const sortedTransactions = useMemo(
+    () => [...transactions].sort(compareTransactionsNewestFirst),
+    [transactions]
+  )
+
   return (
     <FinanceContext.Provider
       value={{
@@ -945,7 +969,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         bonus,
         investmentBase,
         payday,
-        transactions,
+        transactions: sortedTransactions,
         goals,
         setCurrency,
         setIncome,

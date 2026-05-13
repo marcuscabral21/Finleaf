@@ -93,10 +93,10 @@ export default function ResetPasswordClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_26%)] px-4 py-8 text-slate-900 dark:text-slate-100">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 rounded-[32px] border border-slate-200 bg-white/90 p-10 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_26%)] px-3 py-4 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-8">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:gap-8 sm:rounded-[32px] sm:p-10">
         <div className="space-y-3">
-          <h1 className="text-3xl font-semibold">Recuperar senha</h1>
+          <h1 className="text-2xl font-semibold sm:text-3xl">Recuperar senha</h1>
           <p className="text-sm text-slate-600 dark:text-slate-300">
             Use o link de recuperação que foi enviado por email. Esta página conclui o reset de senha usando o link de recuperação do Supabase.
           </p>
@@ -148,7 +148,7 @@ export default function ResetPasswordClient() {
         <button
           type="button"
           onClick={() => router.push('/')}
-          className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 transition"
+          className="rounded-full border border-slate-200 px-6 py-3 text-center text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
         >
           Voltar para login
         </button>

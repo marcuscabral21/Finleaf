@@ -123,7 +123,7 @@ export default function Page() {
       amount,
       date: new Date().toISOString().split('T')[0],
       type,
-      notes: type === 'expense' ? t('profile.investmentAddNote') : t('profile.investmentWithdrawNote'),
+      notes: type === 'expense' ? 'finleaf-investment-add' : 'finleaf-investment-withdraw',
     })
     setInvestmentAmount('')
     showStatus(type === 'expense' ? t('messages.investmentAdded') : t('messages.investmentWithdrawn'), 'success')
@@ -151,10 +151,10 @@ export default function Page() {
         {notice ? <StatusToast message={notice.message} variant={notice.variant} onDismiss={() => setNotice(null)} /> : null}
 
         <form className="grid gap-6" onSubmit={handleSave}>
-          <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
+          <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('profile.account')}</p>
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.account')}</p>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.personalize')}</p>
               </div>
             </div>
@@ -184,13 +184,13 @@ export default function Page() {
             </div>
           </section>
 
-          <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
+          <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('profile.monthlyPlan')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.monthlyPlan')}</p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.monthlyPlanDesc')}</p>
             </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
                 {t('profile.income')}
                 <input
@@ -226,9 +226,9 @@ export default function Page() {
             <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">{t('profile.investmentBaseDesc')}</p>
           </section>
 
-          <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
+          <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('profile.manualMovements')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.manualMovements')}</p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.manualMovementsDesc')}</p>
             </div>
 
@@ -244,7 +244,7 @@ export default function Page() {
                 <button
                   type="button"
                   onClick={handleAddBonus}
-                  className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900"
+                  className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900 sm:py-2"
                 >
                   {t('profile.addBonus')}
                 </button>
@@ -262,14 +262,14 @@ export default function Page() {
                   <button
                     type="button"
                     onClick={() => handleInvestmentMovement('expense')}
-                    className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900"
+                    className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900 sm:py-2"
                   >
                     {t('profile.addInvestment')}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleInvestmentMovement('income')}
-                    className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300 dark:hover:bg-rose-900"
+                    className="rounded-full border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300 dark:hover:bg-rose-900 sm:py-2"
                   >
                     {t('profile.withdrawInvestment')}
                   </button>
@@ -278,9 +278,9 @@ export default function Page() {
             </div>
           </section>
 
-          <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
+          <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('profile.security')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.security')}</p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{PASSWORD_REQUIREMENTS}</p>
             </div>
 
@@ -320,16 +320,16 @@ export default function Page() {
               </label>
             </div>
 
-            <button className="mt-6 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400">
+            <button className="mt-6 w-full rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 sm:w-auto">
               {t('profile.save')}
             </button>
           </section>
         </form>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
+        <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('profile.language')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.language')}</p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.languageDesc')}</p>
             </div>
           </div>
@@ -350,10 +350,10 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
+        <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('profile.account')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.account')}</p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.accountDesc')}</p>
             </div>
           </div>
@@ -363,7 +363,7 @@ export default function Page() {
               type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="rounded-full border border-rose-200 bg-rose-50 px-6 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-400 dark:hover:bg-rose-900"
+              className="w-full rounded-full border border-rose-200 bg-rose-50 px-6 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-400 dark:hover:bg-rose-900 sm:w-auto"
             >
               {isLoggingOut ? t('profile.loggingOut') : t('profile.logout')}
             </button>

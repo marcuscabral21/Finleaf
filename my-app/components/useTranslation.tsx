@@ -10,7 +10,7 @@ const translations = {
     'nav.manageMoney': 'Gerencie seu dinheiro',
     'nav.description': 'Acompanhe gastos, metas e sua economia em um só lugar.',
     'nav.finleafTip': 'Dica do Finleaf',
-    'nav.tipDescription': 'Use a aba History para filtrar gastos por dia, semana ou mês e veja para onde seu dinheiro está indo.',
+    'nav.tipDescription': 'Use a aba Histórico para filtrar gastos por dia, semana ou mês e veja para onde seu dinheiro está indo.',
     'nav.dashboard': 'Painel',
     'nav.transactions': 'Transações',
     'nav.account': 'Conta',
@@ -35,6 +35,7 @@ const translations = {
     'dashboard.allExpenses': 'Todos os gastos',
     'dashboard.addExpense': '+ Adicionar movimento',
     'dashboard.selectCategory': 'Selecione uma categoria',
+    'dashboard.ofTotal': 'do total',
 
     // History
     'history.title': 'Histórico',
@@ -51,12 +52,21 @@ const translations = {
     'history.lastMonth': 'Último mês',
     'history.chooseDay': 'Escolha o dia',
     'history.chooseWeek': 'Escolha a semana',
-    'history.chooseMonth': 'Escolha o mes',
+    'history.chooseMonth': 'Escolha o mês',
     'history.export': 'Exportar',
     'history.save': 'Salvar',
     'history.cancel': 'Cancelar',
     'history.edit': 'Editar',
     'history.delete': 'Apagar',
+    'history.csvMonth': 'Mês',
+    'history.csvCategory': 'Categoria',
+    'history.csvDate': 'Data',
+    'history.csvAmount': 'Valor',
+    'history.csvType': 'Tipo',
+    'history.csvNotes': 'Notas',
+    'history.csvExpense': 'Despesa',
+    'history.csvIncome': 'Receita',
+    'history.csvFilename': 'transacoes.csv',
 
     // Goals
     'goals.title': 'Metas',
@@ -90,11 +100,11 @@ const translations = {
     'profile.dollar': 'Dólar',
     'profile.income': 'Renda mensal',
     'profile.payday': 'Dia de recebimento',
-    'profile.bonus': 'Bonus de salario',
-    'profile.addBonus': 'Adicionar bonus',
-    'profile.bonusNote': 'Bonus de salario',
+    'profile.bonus': 'Bônus de salário',
+    'profile.addBonus': 'Adicionar bônus',
+    'profile.bonusNote': 'Bônus de salário',
     'profile.investmentBase': 'Investimento mensal base',
-    'profile.investmentBaseDesc': 'Lancado automaticamente no dia de recebimento.',
+    'profile.investmentBaseDesc': 'Lançado automaticamente no dia de recebimento.',
     'profile.investmentMovement': 'Movimento de investimento',
     'profile.addInvestment': 'Adicionar investimento',
     'profile.withdrawInvestment': 'Retirar investimento',
@@ -113,8 +123,8 @@ const translations = {
     'profile.monthlyPlan': 'Plano mensal',
     'profile.monthlyPlanDesc': 'Valores que se repetem automaticamente no dia de recebimento.',
     'profile.manualMovements': 'Movimentos pontuais',
-    'profile.manualMovementsDesc': 'Adicione bonus ou ajustes de investimento quando eles acontecerem.',
-    'profile.security': 'Seguranca',
+    'profile.manualMovementsDesc': 'Adicione bônus ou ajustes de investimento quando eles acontecerem.',
+    'profile.security': 'Segurança',
     'profile.logout': 'Fazer logout',
     'profile.loggingOut': 'A sair...',
 
@@ -125,6 +135,8 @@ const translations = {
     'modal.amount': 'Valor',
     'modal.date': 'Data',
     'modal.type': 'Tipo',
+    'modal.comment': 'Comentário opcional',
+    'modal.commentPlaceholder': 'Ex.: jantar com amigos, compra urgente...',
     'modal.expense': 'Despesa',
     'modal.income': 'Receita',
     'modal.cancel': 'Cancelar',
@@ -153,14 +165,16 @@ const translations = {
     'messages.passwordMismatch': 'As senhas não coincidem. Por favor, verifique.',
     'messages.success': 'Configurações atualizadas com sucesso!',
     'messages.logout': 'Logout realizado com sucesso!',
-    'messages.invalidBonus': 'Informe um bonus maior que zero.',
-    'messages.bonusAdded': 'Bonus adicionado como receita.',
+    'messages.invalidBonus': 'Informe um bônus maior que zero.',
+    'messages.bonusAdded': 'Bônus adicionado como receita.',
     'messages.invalidInvestment': 'Informe um investimento maior que zero.',
-    'messages.investmentAdded': 'Investimento adicionado ao historico.',
-    'messages.investmentWithdrawn': 'Retirada de investimento adicionada ao historico.',
+    'messages.investmentAdded': 'Investimento adicionado ao histórico.',
+    'messages.investmentWithdrawn': 'Retirada de investimento adicionada ao histórico.',
     'notes.goalContribution': 'Contribuição para meta',
     'notes.goalWithdrawal': 'Retirada da meta',
     'notes.monthlyInvestment': 'Investimento mensal base',
+    'notes.investmentAdd': 'Investimento adicional',
+    'notes.investmentWithdraw': 'Retirada de investimento',
   },
   en: {
     // Navigation
@@ -196,6 +210,7 @@ const translations = {
     'dashboard.allExpenses': 'All expenses',
     'dashboard.addExpense': '+ Add movement',
     'dashboard.selectCategory': 'Select a category',
+    'dashboard.ofTotal': 'of total',
 
     // History
     'history.title': 'History',
@@ -218,6 +233,15 @@ const translations = {
     'history.cancel': 'Cancel',
     'history.edit': 'Edit',
     'history.delete': 'Delete',
+    'history.csvMonth': 'Month',
+    'history.csvCategory': 'Category',
+    'history.csvDate': 'Date',
+    'history.csvAmount': 'Amount',
+    'history.csvType': 'Type',
+    'history.csvNotes': 'Notes',
+    'history.csvExpense': 'Expense',
+    'history.csvIncome': 'Income',
+    'history.csvFilename': 'transactions.csv',
 
     // Goals
     'goals.title': 'Goals',
@@ -286,6 +310,8 @@ const translations = {
     'modal.amount': 'Amount',
     'modal.date': 'Date',
     'modal.type': 'Type',
+    'modal.comment': 'Optional comment',
+    'modal.commentPlaceholder': 'E.g. dinner with friends, urgent purchase...',
     'modal.expense': 'Expense',
     'modal.income': 'Income',
     'modal.cancel': 'Cancel',
@@ -322,6 +348,8 @@ const translations = {
     'notes.goalContribution': 'Goal contribution',
     'notes.goalWithdrawal': 'Goal withdrawal',
     'notes.monthlyInvestment': 'Base monthly investment',
+    'notes.investmentAdd': 'Additional investment',
+    'notes.investmentWithdraw': 'Investment withdrawal',
   },
 }
 
@@ -339,6 +367,8 @@ export function useTranslation() {
 
     const contributionPrefix = 'Contribuição para meta: '
     const withdrawalPrefix = 'Retirada da meta: '
+    const stableContributionPrefix = 'finleaf-goal-contribution:'
+    const stableWithdrawalPrefix = 'finleaf-goal-withdrawal:'
     const monthlyInvestmentPrefix = 'finleaf-monthly-investment:'
 
     if (note.startsWith(contributionPrefix)) {
@@ -349,8 +379,24 @@ export function useTranslation() {
       return `${t('notes.goalWithdrawal')}: ${note.slice(withdrawalPrefix.length)}`
     }
 
+    if (note.startsWith(stableContributionPrefix)) {
+      return `${t('notes.goalContribution')}: ${note.slice(stableContributionPrefix.length)}`
+    }
+
+    if (note.startsWith(stableWithdrawalPrefix)) {
+      return `${t('notes.goalWithdrawal')}: ${note.slice(stableWithdrawalPrefix.length)}`
+    }
+
     if (note.startsWith(monthlyInvestmentPrefix)) {
       return t('notes.monthlyInvestment')
+    }
+
+    if (note === 'finleaf-investment-add' || note === translations.pt['profile.investmentAddNote'] || note === translations.en['profile.investmentAddNote']) {
+      return t('notes.investmentAdd')
+    }
+
+    if (note === 'finleaf-investment-withdraw' || note === translations.pt['profile.investmentWithdrawNote'] || note === translations.en['profile.investmentWithdrawNote']) {
+      return t('notes.investmentWithdraw')
     }
 
     return note

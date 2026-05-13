@@ -83,13 +83,13 @@ export default function Page() {
   return (
     <NavigationLayout title={t('goals.title')} subtitle={t('goals.subtitle')}>
       <div className="grid gap-6">
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
+        <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('goals.active')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('goals.active')}</p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('goals.activeDesc')}</p>
             </div>
-            <div className="rounded-3xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 dark:bg-slate-900 dark:text-slate-200">
+            <div className="w-full rounded-3xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:w-auto">
               {t('goals.averageProgress')}: {Math.round(totalProgress)}%
             </div>
           </div>
@@ -99,11 +99,11 @@ export default function Page() {
               const progress = Math.min(100, (goal.current / goal.target) * 100)
               const isEditing = editingGoalId === goal.id
               return (
-                <div key={goal.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
+                <div key={goal.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 sm:p-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       {isEditing ? (
-                        <div className="grid gap-3 sm:grid-cols-[1.2fr_0.8fr_0.8fr]">
+                        <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
                           <input
                             value={editGoalValues.name}
                             onChange={(event) => setEditGoalValues((prev) => ({ ...prev, name: event.target.value }))}
@@ -130,10 +130,10 @@ export default function Page() {
                       )}
                     </div>
                     <div className="flex flex-col gap-3 sm:items-end">
-                      <p className="text-right text-sm text-slate-600 dark:text-slate-300">
+                      <p className="text-sm text-slate-600 dark:text-slate-300 sm:text-right">
                         {formatAmount(goal.current)} / {formatAmount(goal.target)}
                       </p>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
                         {isEditing ? (
                           <>
                             <button
@@ -177,7 +177,7 @@ export default function Page() {
                     <div className={`${goal.color} h-full`} style={{ width: `${progress}%` }} />
                   </div>
 
-                  <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr] lg:grid-cols-[1fr_0.8fr_0.8fr]">
+                  <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr] lg:grid-cols-[1fr_0.8fr_0.8fr]">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">{t('goals.customAmount')}</label>
                       <input
@@ -209,9 +209,9 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
-          <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t('goals.add')}</p>
-          <form className="mt-6 grid gap-4 sm:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr]" onSubmit={submitNewGoal}>
+        <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('goals.add')}</p>
+          <form className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr]" onSubmit={submitNewGoal}>
             <input
               value={newGoalName}
               onChange={(event) => setNewGoalName(event.target.value)}
