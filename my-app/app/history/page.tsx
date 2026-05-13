@@ -5,7 +5,7 @@ import NavigationLayout from '@/components/NavigationLayout'
 import { useFinance, CATEGORIES, getCategoryTranslationKey } from '@/components/FinanceProvider'
 import { useTranslation } from '@/components/useTranslation'
 
-type FilterOption = 'day' | 'week' | 'month'
+type FilterOption = 'day' | 'week' | 'month' | 'all'
 
 function getWeekKey(dateString: string) {
   const date = new Date(`${dateString}T00:00:00`)
@@ -35,11 +35,12 @@ export default function Page() {
   const { transactions, formatAmount, updateTransaction, deleteTransaction } = useFinance()
   const { t, translateNote } = useTranslation()
   const transactionCategories = CATEGORIES
-  const selectedPeriod = filter === 'day' ? selectedDate : filter === 'week' ? selectedWeek : selectedMonth
+  const selectedPeriod = filter === 'day' ? selectedDate : filter === 'week' ? selectedWeek : filter === 'month' ? selectedMonth : t('history.allPeriod')
   const filterOptions = [
     { value: 'day', label: t('history.day'), marker: '01', sample: selectedDate },
     { value: 'week', label: t('history.week'), marker: '7D', sample: selectedWeek },
     { value: 'month', label: t('history.month'), marker: '30', sample: selectedMonth },
+    { value: 'all', label: t('history.all'), marker: 'ALL', sample: t('history.allPeriod') },
   ] as const
 
   const filteredTransactions = useMemo(
@@ -47,7 +48,8 @@ export default function Page() {
       transactions.filter((transaction) => {
         if (filter === 'day') return transaction.date === selectedDate
         if (filter === 'week') return getWeekKey(transaction.date) === selectedWeek
-        return transaction.date.startsWith(selectedMonth)
+        if (filter === 'month') return transaction.date.startsWith(selectedMonth)
+        return true
       }),
     [filter, selectedDate, selectedMonth, selectedWeek, transactions]
   )
@@ -121,7 +123,7 @@ export default function Page() {
           </div>
 
           <div className="grid gap-5 p-5 lg:grid-cols-[1.35fr_0.85fr] sm:p-6">
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
               {filterOptions.map((option) => {
                 const isActive = filter === option.value
 
@@ -152,23 +154,32 @@ export default function Page() {
               })}
             </div>
 
-            <label className="flex min-h-full flex-col justify-between rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
-              <span>{filter === 'day' ? t('history.chooseDay') : filter === 'week' ? t('history.chooseWeek') : t('history.chooseMonth')}</span>
-              <input
-                type={filter === 'month' ? 'month' : 'date'}
-                value={selectedPeriod}
-                onChange={(event) => {
-                  if (filter === 'day') {
-                    setSelectedDate(event.target.value)
-                  } else if (filter === 'week') {
-                    setSelectedWeek(getWeekKey(event.target.value))
-                  } else {
-                    setSelectedMonth(event.target.value)
-                  }
-                }}
-                className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
-              />
-            </label>
+            {filter === 'all' ? (
+              <div className="flex min-h-full flex-col justify-between rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
+                <span>{t('history.chooseAll')}</span>
+                <span className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+                  {t('history.allPeriod')}
+                </span>
+              </div>
+            ) : (
+              <label className="flex min-h-full flex-col justify-between rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
+                <span>{filter === 'day' ? t('history.chooseDay') : filter === 'week' ? t('history.chooseWeek') : t('history.chooseMonth')}</span>
+                <input
+                  type={filter === 'month' ? 'month' : 'date'}
+                  value={selectedPeriod}
+                  onChange={(event) => {
+                    if (filter === 'day') {
+                      setSelectedDate(event.target.value)
+                    } else if (filter === 'week') {
+                      setSelectedWeek(getWeekKey(event.target.value))
+                    } else {
+                      setSelectedMonth(event.target.value)
+                    }
+                  }}
+                  className="date-picker-input mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                />
+              </label>
+            )}
           </div>
         </div>
 
@@ -194,7 +205,7 @@ export default function Page() {
 
           <div className="space-y-3">
             {filteredTransactions.map((transaction) => (
-              <div key={transaction.id} className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[1fr_1fr_140px] md:items-center">
+              <div key={transaction.id} className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(190px,auto)] md:items-center">
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t(getCategoryTranslationKey(transaction.category))}</p>
                   <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t(transaction.type === 'expense' ? 'history.csvExpense' : 'history.csvIncome')}</p>
@@ -231,7 +242,7 @@ export default function Page() {
                     <p className="text-sm text-slate-600 dark:text-slate-300">{transaction.date}</p>
                   )}
                 </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:justify-end">
+                <div className="flex flex-col gap-3 md:items-end">
                   {editingId === transaction.id ? (
                     <input
                       type="number"
@@ -240,24 +251,24 @@ export default function Page() {
                       className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                     />
                   ) : (
-                    <p className={`text-lg font-semibold sm:text-right ${transaction.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'}`}>
+                    <p className={`text-lg font-semibold md:text-right ${transaction.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'}`}>
                       {transaction.type === 'expense' ? '-' : '+'} {formatAmount(transaction.amount)}
                     </p>
                   )}
-                  <div className="grid grid-cols-2 gap-2 sm:flex">
+                  <div className="grid w-full grid-cols-2 gap-2 md:w-auto">
                     {editingId === transaction.id ? (
                       <>
                         <button
                           type="button"
                           onClick={saveEdit}
-                          className="rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-400"
+                          className="min-w-20 whitespace-nowrap rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-400"
                         >
                           {t('history.save')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingId(null)}
-                          className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                          className="min-w-20 whitespace-nowrap rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                         >
                           {t('history.cancel')}
                         </button>
@@ -267,14 +278,14 @@ export default function Page() {
                         <button
                           type="button"
                           onClick={() => handleEditClick(transaction.id)}
-                          className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                          className="min-w-20 whitespace-nowrap rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                         >
                           {t('history.edit')}
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteTransaction(transaction.id)}
-                          className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-400 dark:hover:bg-rose-900"
+                          className="min-w-20 whitespace-nowrap rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-400 dark:hover:bg-rose-900"
                         >
                           {t('history.delete')}
                         </button>

@@ -37,6 +37,45 @@ select {
   -webkit-tap-highlight-color: transparent;
 }
 
+input[type="date"],
+input[type="month"],
+.date-picker-input {
+  color-scheme: light;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+.date-picker-input::-webkit-calendar-picker-indicator {
+  filter: none;
+  opacity: 1;
+}
+
+.dark input[type="date"],
+.dark input[type="month"],
+.dark .date-picker-input {
+  color-scheme: dark;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="month"]::-webkit-calendar-picker-indicator,
+.dark .date-picker-input::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.8);
+}
+
+@media (prefers-color-scheme: dark) {
+  input[type="date"],
+  input[type="month"],
+  .date-picker-input {
+    color-scheme: dark;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="month"]::-webkit-calendar-picker-indicator,
+  .date-picker-input::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.8);
+  }
+}
+
 @media (max-width: 640px) {
   input,
   select,
