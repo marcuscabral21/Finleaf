@@ -24,6 +24,10 @@ export default function Page() {
   })
   const { transactions, goals, formatAmount, addTransaction, updateTransaction, deleteTransaction } = useFinance()
   const { t, translateNote } = useTranslation()
+  const transactionCategories = useMemo(
+    () => (CATEGORIES.some((category) => category.name === 'Investimentos') ? CATEGORIES : [...CATEGORIES, { name: 'Investimentos', icon: 'INV' }]),
+    []
+  )
 
   const totalIncome = useMemo(
     () => transactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
@@ -37,7 +41,13 @@ export default function Page() {
 
   const availableBalance = totalIncome - totalExpenses
   const savings = useMemo(() => goals.reduce((sum, goal) => sum + goal.current, 0), [goals])
-  const investments = 0
+  const investments = useMemo(
+    () =>
+      transactions
+        .filter((item) => item.category === 'Investimentos')
+        .reduce((sum, item) => sum + (item.type === 'expense' ? item.amount : -item.amount), 0),
+    [transactions]
+  )
   const dashboardCategories = useMemo(
     () =>
       categories.map((category) => {
@@ -58,7 +68,7 @@ export default function Page() {
   function openAddModal() {
     setEditingTransaction(null)
     setFormData({
-      category: CATEGORIES[0].name,
+      category: transactionCategories[0].name,
       amount: '',
       date: new Date().toISOString().split('T')[0],
       type: 'expense',
@@ -251,7 +261,7 @@ export default function Page() {
                     className="mt-1 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                   >
                     <option value="">{t('dashboard.selectCategory')}</option>
-                    {CATEGORIES.map((category) => (
+                    {transactionCategories.map((category) => (
                       <option key={category.name} value={category.name}>
                         {category.icon} {t(getCategoryTranslationKey(category.name))}
                       </option>

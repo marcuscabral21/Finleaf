@@ -32,12 +32,14 @@ interface FinanceContextValue {
   currency: Currency
   income: string
   bonus: string
+  investmentBase: string
   payday: string
   transactions: Transaction[]
   goals: Goal[]
   setCurrency: (value: Currency) => void
   setIncome: (value: string) => void
   setBonus: (value: string) => void
+  setInvestmentBase: (value: string) => void
   setPayday: (value: string) => void
   addTransaction: (transaction: Omit<Transaction, 'id' | 'icon'>) => void
   updateTransaction: (id: string, updates: Partial<Omit<Transaction, 'id' | 'icon'>>) => void
@@ -62,6 +64,7 @@ type DbTransaction = {
   id: string
   category_id: string | null
   amount: string | number
+  description: string | null
   notes: string | null
   type: 'income' | 'expense'
   transaction_date: string | null
@@ -80,6 +83,7 @@ type DbGoal = {
 const FinanceContext = createContext<FinanceContextValue | null>(null)
 const PROFILE_STORAGE_PREFIX = 'finleaf-profile-settings'
 const SKIPPED_MONTHLY_INCOME_PREFIX = 'finleaf-skipped-monthly-income'
+const SKIPPED_MONTHLY_INVESTMENT_PREFIX = 'finleaf-skipped-monthly-investment'
 
 export const CATEGORIES = [
   { name: 'Alimentacao', icon: '🍽️' },
@@ -96,10 +100,15 @@ const defaultCurrency: Currency = 'EUR'
 const defaultProfileSettings = {
   income: '0',
   bonus: '0',
+  investmentBase: '0',
   payday: '1',
 }
 
 function getCategoryIcon(category: string) {
+  if (category === 'Investimentos') {
+    return 'INV'
+  }
+
   const categoryMap = CATEGORIES.reduce((map, cat) => {
     map[cat.name] = cat.icon
     return map
@@ -157,6 +166,7 @@ export function getCategoryTranslationKey(category: string) {
     Saude: 'categories.saude',
     Educacao: 'categories.educacao',
     Contas: 'categories.contas',
+    Investimentos: 'categories.investimentos',
     Renda: 'categories.renda',
     Transporte: 'categories.transporte',
     Outros: 'categories.outros',
@@ -171,6 +181,10 @@ function getProfileStorageKey(userId: string) {
 
 function getSkippedMonthlyIncomeStorageKey(userId: string) {
   return `${SKIPPED_MONTHLY_INCOME_PREFIX}-${userId}`
+}
+
+function getSkippedMonthlyInvestmentStorageKey(userId: string) {
+  return `${SKIPPED_MONTHLY_INVESTMENT_PREFIX}-${userId}`
 }
 
 function getStoredProfileSettings(userId: string) {
@@ -188,6 +202,7 @@ function getStoredProfileSettings(userId: string) {
     return {
       income: typeof parsed.income === 'string' ? parsed.income : defaultProfileSettings.income,
       bonus: typeof parsed.bonus === 'string' ? parsed.bonus : defaultProfileSettings.bonus,
+      investmentBase: typeof parsed.investmentBase === 'string' ? parsed.investmentBase : defaultProfileSettings.investmentBase,
       payday: typeof parsed.payday === 'string' ? parsed.payday : defaultProfileSettings.payday,
     }
   } catch {
@@ -218,6 +233,10 @@ function getMonthlyIncomeNote(monthKey: string) {
   return `finleaf-monthly-income:${monthKey}`
 }
 
+function getMonthlyInvestmentNote(monthKey: string) {
+  return `finleaf-monthly-investment:${monthKey}`
+}
+
 function getMonthKeyFromDate(date: string) {
   return date.slice(0, 7)
 }
@@ -228,6 +247,24 @@ function getSkippedMonthlyIncomeMonths(userId: string) {
   }
 
   const saved = window.localStorage.getItem(getSkippedMonthlyIncomeStorageKey(userId))
+  if (!saved) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(saved)
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function getSkippedMonthlyInvestmentMonths(userId: string) {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  const saved = window.localStorage.getItem(getSkippedMonthlyInvestmentStorageKey(userId))
   if (!saved) {
     return []
   }
@@ -253,8 +290,21 @@ function skipMonthlyIncomeForMonth(userId: string, monthKey: string) {
   window.localStorage.setItem(getSkippedMonthlyIncomeStorageKey(userId), JSON.stringify([...skippedMonths, monthKey]))
 }
 
+function skipMonthlyInvestmentForMonth(userId: string, monthKey: string) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const skippedMonths = getSkippedMonthlyInvestmentMonths(userId)
+  if (skippedMonths.includes(monthKey)) {
+    return
+  }
+
+  window.localStorage.setItem(getSkippedMonthlyInvestmentStorageKey(userId), JSON.stringify([...skippedMonths, monthKey]))
+}
+
 function mapTransaction(row: DbTransaction): Transaction {
-  const categoryName = row.categories?.name ?? 'Outros'
+  const categoryName = row.categories?.name ?? row.description ?? 'Outros'
   return {
     id: row.id,
     categoryId: row.category_id,
@@ -287,6 +337,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState<Currency>(defaultCurrency)
   const [income, setIncomeState] = useState(defaultProfileSettings.income)
   const [bonus, setBonusState] = useState(defaultProfileSettings.bonus)
+  const [investmentBase, setInvestmentBaseState] = useState(defaultProfileSettings.investmentBase)
   const [payday, setPaydayState] = useState(defaultProfileSettings.payday)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
@@ -297,7 +348,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
     const profileSettings = getStoredProfileSettings(currentUser.id)
     setIncomeState(profileSettings.income)
-    setBonusState(profileSettings.bonus)
+    setBonusState(defaultProfileSettings.bonus)
+    setInvestmentBaseState(profileSettings.investmentBase)
     setPaydayState(profileSettings.payday)
 
     const [settingsResult, categoriesResult, transactionsResult, goalsResult] = await Promise.all([
@@ -305,7 +357,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       supabase.from('categories').select('id,name,icon_light,icon_dark,color_light,color_dark').or(`user_id.eq.${currentUser.id},user_id.is.null`),
       supabase
         .from('transactions')
-        .select('id,category_id,amount,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+        .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
         .eq('user_id', currentUser.id)
         .order('transaction_date', { ascending: false }),
       supabase
@@ -364,6 +416,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         setCurrencyState(defaultCurrency)
         setIncomeState(defaultProfileSettings.income)
         setBonusState(defaultProfileSettings.bonus)
+        setInvestmentBaseState(defaultProfileSettings.investmentBase)
         setPaydayState(defaultProfileSettings.payday)
         setLoading(false)
         if (pathname !== '/login' && pathname !== '/reset-password') {
@@ -466,7 +519,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           transaction_date: scheduledDateText,
           notes: monthlyIncomeNote,
         })
-        .select('id,category_id,amount,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+        .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
         .single()
 
       if (!error && data) {
@@ -477,18 +530,110 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     void insertMonthlyIncome()
   }, [categories, income, loading, payday, pathname, transactions, user])
 
+  useEffect(() => {
+    if (loading || !user || pathname === '/login' || pathname === '/reset-password') {
+      return
+    }
+
+    const monthlyInvestment = Number(investmentBase)
+    if (!Number.isFinite(monthlyInvestment) || monthlyInvestment <= 0) {
+      return
+    }
+
+    const scheduledDate = getScheduledIncomeDate(payday)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    scheduledDate.setHours(0, 0, 0, 0)
+
+    if (today < scheduledDate) {
+      return
+    }
+
+    const monthKey = `${scheduledDate.getFullYear()}-${String(scheduledDate.getMonth() + 1).padStart(2, '0')}`
+    const scheduledDateText = scheduledDate.toISOString().split('T')[0]
+    const monthlyInvestmentNote = getMonthlyInvestmentNote(monthKey)
+    const skippedMonthlyInvestmentMonths = getSkippedMonthlyInvestmentMonths(user.id)
+    if (skippedMonthlyInvestmentMonths.includes(monthKey)) {
+      return
+    }
+
+    const automaticMonthlyInvestment = transactions.find(
+      (transaction) =>
+        transaction.type === 'expense' &&
+        transaction.category === 'Investimentos' &&
+        transaction.notes === monthlyInvestmentNote
+    )
+
+    if (automaticMonthlyInvestment) {
+      if (automaticMonthlyInvestment.amount !== monthlyInvestment) {
+        const updateMonthlyInvestment = async () => {
+          const { error } = await supabase
+            .from('transactions')
+            .update({
+              amount: monthlyInvestment,
+              description: 'Investimentos',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', automaticMonthlyInvestment.id)
+            .eq('user_id', user.id)
+
+          if (!error) {
+            setTransactions((current) =>
+              current.map((transaction) =>
+                transaction.id === automaticMonthlyInvestment.id
+                  ? {
+                      ...transaction,
+                      amount: monthlyInvestment,
+                    }
+                  : transaction
+              )
+            )
+          }
+        }
+
+        void updateMonthlyInvestment()
+      }
+
+      return
+    }
+
+    const investimentosCategory = categories.find((category) => category.name === 'Investimentos')
+    const insertMonthlyInvestment = async () => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          category_id: investimentosCategory?.id ?? null,
+          amount: monthlyInvestment,
+          type: 'expense',
+          transaction_date: scheduledDateText,
+          description: 'Investimentos',
+          notes: monthlyInvestmentNote,
+        })
+        .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+        .single()
+
+      if (!error && data) {
+        setTransactions((current) => [mapTransaction(data as unknown as DbTransaction), ...current])
+      }
+    }
+
+    void insertMonthlyInvestment()
+  }, [categories, investmentBase, loading, payday, pathname, transactions, user])
+
   const persistProfileSettings = useCallback(
     (updates: Partial<typeof defaultProfileSettings>) => {
       if (!user) return
       const nextSettings = {
         income,
         bonus,
+        investmentBase,
         payday,
         ...updates,
       }
       saveProfileSettings(user.id, nextSettings)
     },
-    [bonus, income, payday, user]
+    [bonus, income, investmentBase, payday, user]
   )
 
   const setCurrency = (value: Currency) => {
@@ -509,7 +654,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   const setBonus = (value: string) => {
     setBonusState(value)
-    persistProfileSettings({ bonus: value })
+  }
+
+  const setInvestmentBase = (value: string) => {
+    setInvestmentBaseState(value)
+    persistProfileSettings({ investmentBase: value })
   }
 
   const setPayday = (value: string) => {
@@ -536,11 +685,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         user_id: user.id,
         category_id: category?.id ?? null,
         amount: transaction.amount,
+        description: transaction.category,
         type: transaction.type,
         transaction_date: transaction.date,
         notes: transaction.notes ?? null,
       })
-      .select('id,category_id,amount,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+      .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
       .single()
       .then(({ data, error }) => {
         if (error || !data) {
@@ -574,6 +724,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       .update({
         category_id: updates.category ? category?.id ?? null : undefined,
         amount: updates.amount,
+        description: updates.category,
         type: updates.type,
         transaction_date: updates.date,
         notes: updates.notes,
@@ -598,6 +749,16 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
     if (isDeletedMonthlyIncome && deletedMonthKey) {
       skipMonthlyIncomeForMonth(user.id, deletedMonthKey)
+    }
+
+    const isDeletedMonthlyInvestment =
+      deletedTransaction?.type === 'expense' &&
+      deletedTransaction.category === 'Investimentos' &&
+      deletedMonthKey &&
+      deletedTransaction.notes === getMonthlyInvestmentNote(deletedMonthKey)
+
+    if (isDeletedMonthlyInvestment && deletedMonthKey) {
+      skipMonthlyInvestmentForMonth(user.id, deletedMonthKey)
     }
 
     setTransactions((current) => current.filter((transaction) => transaction.id !== id))
@@ -726,7 +887,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           transaction_date: today,
           notes,
         })
-        .select('id,category_id,amount,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+        .select('id,category_id,amount,description,notes,type,transaction_date,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
         .single()
 
       if (!transactionError && data) {
@@ -782,12 +943,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         currency,
         income,
         bonus,
+        investmentBase,
         payday,
         transactions,
         goals,
         setCurrency,
         setIncome,
         setBonus,
+        setInvestmentBase,
         setPayday,
         addTransaction,
         updateTransaction,

@@ -2,7 +2,34 @@
 
 import { FormEvent, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import StatusToast, { type StatusVariant } from '@/components/StatusToast'
 import { supabase } from '@/lib/supabaseclient'
+import { PASSWORD_REQUIREMENTS, getPasswordStrengthError } from '@/lib/password'
+
+function removeNumbers(value: string) {
+  return value.replace(/\d/g, '')
+}
+
+type StatusNotice = {
+  message: string
+  variant: StatusVariant
+}
+
+function EyeIcon({ hidden }: { hidden: boolean }) {
+  return hidden ? (
+    <svg className="h-5 w-5 overflow-visible" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 3L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M7.5 7.8C5.4 8.8 3.7 10.4 2.5 12c2.2 3 5.3 5 9.5 5 1.4 0 2.7-.2 3.8-.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M13.9 7.2c3.3.5 5.8 2.4 7.6 4.8-.8 1.1-1.8 2.1-2.9 2.9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ) : (
+    <svg className="h-5 w-5 overflow-visible" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M2.5 12c2.2-3 5.3-5 9.5-5s7.3 2 9.5 5c-2.2 3-5.3 5-9.5 5s-7.3-2-9.5-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  )
+}
 
 function FinleafLogo() {
   return (
@@ -31,23 +58,44 @@ export default function HomeClient() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [statusNotice, setStatusNotice] = useState<StatusNotice | null>(null)
+  const [queryNoticeDismissed, setQueryNoticeDismissed] = useState(false)
   const [loading, setLoading] = useState(false)
   const searchParams = useSearchParams()
 
-  const queryStatusMessage = useMemo(() => {
+  const queryStatusNotice = useMemo<StatusNotice | null>(() => {
     if (searchParams.get('emailConfirmed') === 'true' || searchParams.get('type') === 'signup') {
-      return 'Email confirmado com sucesso! Faça login com sua senha.'
+      return { message: 'Email confirmado com sucesso! Faça login com sua senha.', variant: 'success' }
     }
     return null
   }, [searchParams])
 
-  const activeStatusMessage = statusMessage || queryStatusMessage
+  const activeStatusNotice = statusNotice || (queryNoticeDismissed ? null : queryStatusNotice)
+  const showStatus = (message: string, variant: StatusVariant = 'info') => {
+    setStatusNotice({ message, variant })
+  }
+  const dismissStatus = () => {
+    if (statusNotice) {
+      setStatusNotice(null)
+    } else {
+      setQueryNoticeDismissed(true)
+    }
+  }
 
   const handleSignUp = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const cleanName = removeNumbers(name).trim()
+
+    if (!cleanName) return
+
+    const passwordError = getPasswordStrengthError(password)
+    if (passwordError) {
+      showStatus(passwordError, 'error')
+      return
+    }
+
     setLoading(true)
-    setStatusMessage(null)
+    setStatusNotice(null)
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -55,7 +103,7 @@ export default function HomeClient() {
       options: {
         emailRedirectTo: `${window.location.origin}/login?emailConfirmed=true`,
         data: {
-          full_name: name,
+          full_name: cleanName,
         },
       },
     })
@@ -63,17 +111,17 @@ export default function HomeClient() {
     setLoading(false)
 
     if (error) {
-      setStatusMessage(error.message)
+      showStatus(error.message, 'error')
       return
     }
 
-    setStatusMessage('Conta criada com sucesso! Verifique seu email para confirmar a conta antes de fazer login.')
+    showStatus('Conta criada com sucesso! Verifique seu email para confirmar a conta antes de fazer login.', 'success')
   }
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setLoading(true)
-    setStatusMessage(null)
+    setStatusNotice(null)
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -84,14 +132,14 @@ export default function HomeClient() {
 
     if (error) {
       if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed')) {
-        setStatusMessage('Email não confirmado. Verifique sua caixa de entrada e confirme sua conta antes de fazer login.')
+        showStatus('Email não confirmado. Verifique sua caixa de entrada e confirme sua conta antes de fazer login.', 'error')
       } else {
-        setStatusMessage(error.message)
+        showStatus(error.message, 'error')
       }
       return
     }
 
-    setStatusMessage('Login realizado com sucesso! Bem-vindo(a) ao Finleaf.')
+    showStatus('Login realizado com sucesso! Bem-vindo(a) ao Finleaf.', 'success')
     console.log('User signed in:', data.user)
     router.push('/')
     router.refresh()
@@ -99,12 +147,12 @@ export default function HomeClient() {
 
   const handleForgotPassword = async () => {
     if (!email) {
-      setStatusMessage('Por favor, insira seu email primeiro.')
+      showStatus('Insira o seu email primeiro para enviarmos o link de recuperação.', 'info')
       return
     }
 
     setLoading(true)
-    setStatusMessage(null)
+    setStatusNotice(null)
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -114,14 +162,14 @@ export default function HomeClient() {
 
     if (error) {
       if (error.message.includes('rate limit') || error.message.includes('Rate limit')) {
-        setStatusMessage('Muitos emails enviados recentemente. Aguarde alguns minutos e tente novamente.')
+        showStatus('Muitos emails foram enviados recentemente. Aguarde alguns minutos e tente novamente.', 'error')
       } else {
-        setStatusMessage(error.message)
+        showStatus(error.message, 'error')
       }
       return
     }
 
-    setStatusMessage('Email de recuperação enviado! Verifique sua caixa de entrada.')
+    showStatus('Email de recuperação enviado. Verifique sua caixa de entrada.', 'success')
   }
 
   return (
@@ -146,7 +194,7 @@ export default function HomeClient() {
                     Nome
                     <input
                       value={name}
-                      onChange={(event) => setName(event.target.value)}
+                      onChange={(event) => setName(removeNumbers(event.target.value))}
                       required
                       className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                       placeholder="Seu nome"
@@ -171,26 +219,21 @@ export default function HomeClient() {
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
                         required
+                        minLength={12}
+                        autoComplete="new-password"
                         className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                         placeholder="Sua senha"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
+                        className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                        aria-label={showPassword ? 'Ocultar password' : 'Mostrar password'}
                       >
-                        {showPassword ? (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                          </svg>
-                        )}
+                        <EyeIcon hidden={showPassword} />
                       </button>
                     </div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">{PASSWORD_REQUIREMENTS}</span>
                   </label>
                   <button
                     type="submit"
@@ -250,24 +293,17 @@ export default function HomeClient() {
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
                         required
+                        autoComplete="current-password"
                         className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                         placeholder="Sua senha"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
+                        className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                        aria-label={showPassword ? 'Ocultar password' : 'Mostrar password'}
                       >
-                        {showPassword ? (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                          </svg>
-                        )}
+                        <EyeIcon hidden={showPassword} />
                       </button>
                     </div>
                   </label>
@@ -313,10 +349,12 @@ export default function HomeClient() {
           </div>
         </div>
 
-        {activeStatusMessage ? (
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-            {activeStatusMessage}
-          </div>
+        {activeStatusNotice ? (
+          <StatusToast
+            message={activeStatusNotice.message}
+            variant={activeStatusNotice.variant}
+            onDismiss={dismissStatus}
+          />
         ) : null}
 
         <footer className="fixed bottom-6 right-6 flex gap-6">

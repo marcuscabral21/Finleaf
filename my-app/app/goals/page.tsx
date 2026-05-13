@@ -5,9 +5,18 @@ import NavigationLayout from '@/components/NavigationLayout'
 import { useFinance } from '@/components/FinanceProvider'
 import { useTranslation } from '@/components/useTranslation'
 
+function getDateInputValue(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 export default function Page() {
   const { goals, formatAmount, addGoal, updateGoal, adjustGoal, deleteGoal } = useFinance()
   const { t } = useTranslation()
+  const today = useMemo(() => getDateInputValue(new Date()), [])
   const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({})
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
   const [editGoalValues, setEditGoalValues] = useState({ name: '', target: '', deadline: '' })
@@ -26,7 +35,8 @@ export default function Page() {
 
   function handleContribution(id: string, change: number) {
     const parsedAmount = Number(customAmounts[id])
-    const amount = Number.isFinite(parsedAmount) && parsedAmount !== 0 ? parsedAmount : change
+    const movementAmount = Number.isFinite(parsedAmount) && parsedAmount !== 0 ? Math.abs(parsedAmount) : Math.abs(change)
+    const amount = change < 0 ? -movementAmount : movementAmount
     adjustGoal(id, amount)
     setCustomAmounts((prev) => ({ ...prev, [id]: '' }))
   }
@@ -57,6 +67,8 @@ export default function Page() {
   function submitNewGoal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!newGoalName || !newGoalTarget || !newGoalDeadline) return
+    if (newGoalDeadline < today) return
+
     addGoal({
       name: newGoalName,
       target: Number(newGoalTarget),
@@ -216,6 +228,7 @@ export default function Page() {
             <input
               type="date"
               value={newGoalDeadline}
+              min={today}
               onChange={(event) => setNewGoalDeadline(event.target.value)}
               className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
             />

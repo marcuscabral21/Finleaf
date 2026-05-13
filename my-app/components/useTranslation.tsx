@@ -33,7 +33,7 @@ const translations = {
     'dashboard.recentHistory': 'Histórico recente',
     'dashboard.recentHistoryDesc': 'Acompanhe as últimas transações e edite ou remova quando precisar.',
     'dashboard.allExpenses': 'Todos os gastos',
-    'dashboard.addExpense': '+ Adicionar gasto',
+    'dashboard.addExpense': '+ Adicionar movimento',
     'dashboard.selectCategory': 'Selecione uma categoria',
 
     // History
@@ -49,7 +49,10 @@ const translations = {
     'history.lastDay': 'Último dia',
     'history.lastWeek': 'Última semana',
     'history.lastMonth': 'Último mês',
-    'history.export': 'Exportar CSV',
+    'history.chooseDay': 'Escolha o dia',
+    'history.chooseWeek': 'Escolha a semana',
+    'history.chooseMonth': 'Escolha o mes',
+    'history.export': 'Exportar',
     'history.save': 'Salvar',
     'history.cancel': 'Cancelar',
     'history.edit': 'Editar',
@@ -87,7 +90,16 @@ const translations = {
     'profile.dollar': 'Dólar',
     'profile.income': 'Renda mensal',
     'profile.payday': 'Dia de recebimento',
-    'profile.bonus': 'Bônus mensal',
+    'profile.bonus': 'Bonus de salario',
+    'profile.addBonus': 'Adicionar bonus',
+    'profile.bonusNote': 'Bonus de salario',
+    'profile.investmentBase': 'Investimento mensal base',
+    'profile.investmentBaseDesc': 'Lancado automaticamente no dia de recebimento.',
+    'profile.investmentMovement': 'Movimento de investimento',
+    'profile.addInvestment': 'Adicionar investimento',
+    'profile.withdrawInvestment': 'Retirar investimento',
+    'profile.investmentAddNote': 'Investimento adicional',
+    'profile.investmentWithdrawNote': 'Retirada de investimento',
     'profile.newPassword': 'Nova senha',
     'profile.confirmPassword': 'Confirmar senha',
     'profile.save': 'Salvar alterações',
@@ -98,6 +110,11 @@ const translations = {
     'profile.english': 'English',
     'profile.account': 'Conta',
     'profile.accountDesc': 'Gerencie sua conta e sessões.',
+    'profile.monthlyPlan': 'Plano mensal',
+    'profile.monthlyPlanDesc': 'Valores que se repetem automaticamente no dia de recebimento.',
+    'profile.manualMovements': 'Movimentos pontuais',
+    'profile.manualMovementsDesc': 'Adicione bonus ou ajustes de investimento quando eles acontecerem.',
+    'profile.security': 'Seguranca',
     'profile.logout': 'Fazer logout',
     'profile.loggingOut': 'A sair...',
 
@@ -119,6 +136,7 @@ const translations = {
     'categories.saude': 'Saúde',
     'categories.educacao': 'Educação',
     'categories.contas': 'Contas',
+    'categories.investimentos': 'Investimentos',
     'categories.renda': 'Renda',
     'categories.transporte': 'Transporte',
     'categories.outros': 'Outros',
@@ -135,8 +153,14 @@ const translations = {
     'messages.passwordMismatch': 'As senhas não coincidem. Por favor, verifique.',
     'messages.success': 'Configurações atualizadas com sucesso!',
     'messages.logout': 'Logout realizado com sucesso!',
+    'messages.invalidBonus': 'Informe um bonus maior que zero.',
+    'messages.bonusAdded': 'Bonus adicionado como receita.',
+    'messages.invalidInvestment': 'Informe um investimento maior que zero.',
+    'messages.investmentAdded': 'Investimento adicionado ao historico.',
+    'messages.investmentWithdrawn': 'Retirada de investimento adicionada ao historico.',
     'notes.goalContribution': 'Contribuição para meta',
     'notes.goalWithdrawal': 'Retirada da meta',
+    'notes.monthlyInvestment': 'Investimento mensal base',
   },
   en: {
     // Navigation
@@ -170,7 +194,7 @@ const translations = {
     'dashboard.recentHistory': 'Recent history',
     'dashboard.recentHistoryDesc': 'Track your latest transactions and edit or remove them when needed.',
     'dashboard.allExpenses': 'All expenses',
-    'dashboard.addExpense': '+ Add expense',
+    'dashboard.addExpense': '+ Add movement',
     'dashboard.selectCategory': 'Select a category',
 
     // History
@@ -186,7 +210,10 @@ const translations = {
     'history.lastDay': 'Last day',
     'history.lastWeek': 'Last week',
     'history.lastMonth': 'Last month',
-    'history.export': 'Export CSV',
+    'history.chooseDay': 'Choose day',
+    'history.chooseWeek': 'Choose week',
+    'history.chooseMonth': 'Choose month',
+    'history.export': 'Export',
     'history.save': 'Save',
     'history.cancel': 'Cancel',
     'history.edit': 'Edit',
@@ -224,7 +251,16 @@ const translations = {
     'profile.dollar': 'Dollar',
     'profile.income': 'Monthly income',
     'profile.payday': 'Payday',
-    'profile.bonus': 'Monthly bonus',
+    'profile.bonus': 'Salary bonus',
+    'profile.addBonus': 'Add bonus',
+    'profile.bonusNote': 'Salary bonus',
+    'profile.investmentBase': 'Base monthly investment',
+    'profile.investmentBaseDesc': 'Added automatically on payday.',
+    'profile.investmentMovement': 'Investment movement',
+    'profile.addInvestment': 'Add investment',
+    'profile.withdrawInvestment': 'Withdraw investment',
+    'profile.investmentAddNote': 'Additional investment',
+    'profile.investmentWithdrawNote': 'Investment withdrawal',
     'profile.newPassword': 'New password',
     'profile.confirmPassword': 'Confirm password',
     'profile.save': 'Save changes',
@@ -235,6 +271,11 @@ const translations = {
     'profile.english': 'English',
     'profile.account': 'Account',
     'profile.accountDesc': 'Manage your account and sessions.',
+    'profile.monthlyPlan': 'Monthly plan',
+    'profile.monthlyPlanDesc': 'Values that repeat automatically on payday.',
+    'profile.manualMovements': 'One-off movements',
+    'profile.manualMovementsDesc': 'Add bonuses or investment adjustments when they happen.',
+    'profile.security': 'Security',
     'profile.logout': 'Log out',
     'profile.loggingOut': 'Logging out...',
 
@@ -256,6 +297,7 @@ const translations = {
     'categories.saude': 'Health',
     'categories.educacao': 'Education',
     'categories.contas': 'Bills',
+    'categories.investimentos': 'Investments',
     'categories.renda': 'Income',
     'categories.transporte': 'Transport',
     'categories.outros': 'Others',
@@ -272,8 +314,14 @@ const translations = {
     'messages.passwordMismatch': 'Passwords do not match. Please check.',
     'messages.success': 'Settings updated successfully!',
     'messages.logout': 'Logged out successfully!',
+    'messages.invalidBonus': 'Enter a bonus greater than zero.',
+    'messages.bonusAdded': 'Bonus added as income.',
+    'messages.invalidInvestment': 'Enter an investment greater than zero.',
+    'messages.investmentAdded': 'Investment added to history.',
+    'messages.investmentWithdrawn': 'Investment withdrawal added to history.',
     'notes.goalContribution': 'Goal contribution',
     'notes.goalWithdrawal': 'Goal withdrawal',
+    'notes.monthlyInvestment': 'Base monthly investment',
   },
 }
 
@@ -291,6 +339,7 @@ export function useTranslation() {
 
     const contributionPrefix = 'Contribuição para meta: '
     const withdrawalPrefix = 'Retirada da meta: '
+    const monthlyInvestmentPrefix = 'finleaf-monthly-investment:'
 
     if (note.startsWith(contributionPrefix)) {
       return `${t('notes.goalContribution')}: ${note.slice(contributionPrefix.length)}`
@@ -298,6 +347,10 @@ export function useTranslation() {
 
     if (note.startsWith(withdrawalPrefix)) {
       return `${t('notes.goalWithdrawal')}: ${note.slice(withdrawalPrefix.length)}`
+    }
+
+    if (note.startsWith(monthlyInvestmentPrefix)) {
+      return t('notes.monthlyInvestment')
     }
 
     return note

@@ -7,29 +7,46 @@ import { useTranslation } from '@/components/useTranslation'
 
 type FilterOption = 'day' | 'week' | 'month'
 
-function getDateDiff(dateString: string) {
-  const today = new Date()
-  const target = new Date(dateString)
-  const diff = Math.floor((today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24))
-  return diff
+function getWeekKey(dateString: string) {
+  const date = new Date(`${dateString}T00:00:00`)
+  const day = date.getDay()
+  const mondayOffset = day === 0 ? -6 : 1 - day
+  const monday = new Date(date)
+  monday.setDate(date.getDate() + mondayOffset)
+  return monday.toISOString().split('T')[0]
+}
+
+function escapeCsvValue(value: string) {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`
+  }
+
+  return value
 }
 
 export default function Page() {
+  const today = new Date().toISOString().split('T')[0]
   const [filter, setFilter] = useState<FilterOption>('week')
+  const [selectedDate, setSelectedDate] = useState(today)
+  const [selectedWeek, setSelectedWeek] = useState(getWeekKey(today))
+  const [selectedMonth, setSelectedMonth] = useState(today.slice(0, 7))
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValues, setEditValues] = useState({ category: '', amount: '', date: '' })
   const { transactions, formatAmount, updateTransaction, deleteTransaction } = useFinance()
   const { t, translateNote } = useTranslation()
+  const transactionCategories = useMemo(
+    () => (CATEGORIES.some((category) => category.name === 'Investimentos') ? CATEGORIES : [...CATEGORIES, { name: 'Investimentos', icon: 'INV' }]),
+    []
+  )
 
   const filteredTransactions = useMemo(
     () =>
       transactions.filter((transaction) => {
-        const diff = getDateDiff(transaction.date)
-        if (filter === 'day') return diff <= 1
-        if (filter === 'week') return diff <= 7
-        return diff <= 30
+        if (filter === 'day') return transaction.date === selectedDate
+        if (filter === 'week') return getWeekKey(transaction.date) === selectedWeek
+        return transaction.date.startsWith(selectedMonth)
       }),
-    [filter, transactions]
+    [filter, selectedDate, selectedMonth, selectedWeek, transactions]
   )
 
   function handleEditClick(transactionId: string) {
@@ -50,11 +67,28 @@ export default function Page() {
   }
 
   function downloadCsv() {
-    const rows = [
-      ['Categoria', 'Data', 'Valor', 'Tipo'],
-      ...filteredTransactions.map((transaction) => [t(getCategoryTranslationKey(transaction.category)), transaction.date, transaction.amount.toString(), transaction.type]),
-    ]
-    const csvContent = rows.map((row) => row.join(',')).join('\n')
+    const transactionsByMonth = filteredTransactions.reduce((groups, transaction) => {
+      const monthKey = transaction.date.slice(0, 7)
+      groups[monthKey] = [...(groups[monthKey] ?? []), transaction]
+      return groups
+    }, {} as Record<string, typeof filteredTransactions>)
+
+    const csvSections = Object.entries(transactionsByMonth)
+      .sort(([firstMonth], [secondMonth]) => secondMonth.localeCompare(firstMonth))
+      .flatMap(([month, monthTransactions]) => [
+        [`Mes: ${month}`],
+        ['Categoria', 'Data', 'Valor', 'Tipo', 'Notas'],
+        ...monthTransactions.map((transaction) => [
+          t(getCategoryTranslationKey(transaction.category)),
+          transaction.date,
+          transaction.amount.toString(),
+          transaction.type,
+          translateNote(transaction.notes) ?? '',
+        ]),
+        [],
+      ])
+
+    const csvContent = csvSections.map((row) => row.map(escapeCsvValue).join(',')).join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -96,6 +130,25 @@ export default function Page() {
               ))}
             </div>
           </div>
+          <div className="mt-5 max-w-sm">
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+              {filter === 'day' ? t('history.chooseDay') : filter === 'week' ? t('history.chooseWeek') : t('history.chooseMonth')}
+              <input
+                type={filter === 'month' ? 'month' : 'date'}
+                value={filter === 'day' ? selectedDate : filter === 'week' ? selectedWeek : selectedMonth}
+                onChange={(event) => {
+                  if (filter === 'day') {
+                    setSelectedDate(event.target.value)
+                  } else if (filter === 'week') {
+                    setSelectedWeek(getWeekKey(event.target.value))
+                  } else {
+                    setSelectedMonth(event.target.value)
+                  }
+                }}
+                className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+              />
+            </label>
+          </div>
         </div>
 
         <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90">
@@ -106,7 +159,7 @@ export default function Page() {
             </div>
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                {filter === 'day' ? t('history.lastDay') : filter === 'week' ? t('history.lastWeek') : t('history.lastMonth')}
+                {filter === 'day' ? selectedDate : filter === 'week' ? selectedWeek : selectedMonth}
               </span>
               <button
                 type="button"
@@ -134,7 +187,7 @@ export default function Page() {
                         onChange={(event) => setEditValues((prev) => ({ ...prev, category: event.target.value }))}
                         className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                       >
-                        {CATEGORIES.map((category) => (
+                        {transactionCategories.map((category) => (
                           <option key={category.name} value={category.name}>
                             {category.icon} {t(getCategoryTranslationKey(category.name))}
                           </option>
