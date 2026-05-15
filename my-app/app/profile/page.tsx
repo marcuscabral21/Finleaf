@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+
+
 import NavigationLayout from '@/components/NavigationLayout'
 import { useFinance } from '@/components/FinanceProvider'
 import { useLanguage } from '@/components/LanguageProvider'
@@ -72,6 +74,12 @@ export default function Page() {
   const [showPassword, setShowPassword] = useState(false)
   const [investmentAmount, setInvestmentAmount] = useState('')
   const [notice, setNotice] = useState<StatusNotice | null>(null)
+
+  // State local: evita salvar plano mensal enquanto o usuário está digitando.
+  const [draftIncome, setDraftIncome] = useState(income)
+  const [draftInvestmentBase, setDraftInvestmentBase] = useState(investmentBase)
+  const [draftPayday, setDraftPayday] = useState(payday)
+
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const profileName = name ?? user?.user_metadata?.full_name ?? ''
@@ -82,6 +90,12 @@ export default function Page() {
 
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    // Aplica mudanças do plano mensal apenas ao clicar em Salvar.
+    setIncome(draftIncome)
+    setInvestmentBase(draftInvestmentBase)
+    setPayday(draftPayday)
+
 
     const cleanName = removeNumbers(profileName).trim()
     if (!cleanName) return
@@ -243,20 +257,22 @@ export default function Page() {
                 {t('profile.income')}
                 <input
                   type="number"
-                  value={income}
-                  onChange={(event) => setIncome(event.target.value)}
+                  value={draftIncome}
+                  onChange={(event) => setDraftIncome(event.target.value)}
                   className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                 />
               </label>
+
 
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
                 {t('profile.investmentBase')}
                 <input
                   type="number"
-                  value={investmentBase}
-                  onChange={(event) => setInvestmentBase(event.target.value)}
+                  value={draftInvestmentBase}
+                  onChange={(event) => setDraftInvestmentBase(event.target.value)}
                   className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                 />
+
               </label>
 
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -265,8 +281,9 @@ export default function Page() {
                   type="number"
                   min="1"
                   max="31"
-                  value={payday}
-                  onChange={(event) => setPayday(event.target.value)}
+                  value={draftPayday}
+                  onChange={(event) => setDraftPayday(event.target.value)}
+
                   className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                 />
               </label>
