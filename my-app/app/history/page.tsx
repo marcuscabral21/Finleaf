@@ -7,13 +7,37 @@ import { useTranslation } from '@/components/useTranslation'
 
 type FilterOption = 'day' | 'week' | 'month' | 'all'
 
-function getWeekKey(dateString: string) {
+function getDateFromInput(dateString: string) {
+  return new Date(`${dateString}T00:00:00`)
+}
+
+function getDateInputValue(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function addDays(dateString: string, days: number) {
+  const date = getDateFromInput(dateString)
+  date.setDate(date.getDate() + days)
+
+  return getDateInputValue(date)
+}
+
+function getWeekStart(dateString: string) {
   const date = new Date(`${dateString}T00:00:00`)
   const day = date.getDay()
   const mondayOffset = day === 0 ? -6 : 1 - day
   const monday = new Date(date)
   monday.setDate(date.getDate() + mondayOffset)
-  return monday.toISOString().split('T')[0]
+
+  return getDateInputValue(monday)
+}
+
+function getWeekLabel(startDate: string) {
+  return `${startDate} - ${addDays(startDate, 6)}`
 }
 
 function escapeCsvValue(value: string) {
@@ -28,17 +52,18 @@ export default function Page() {
   const today = new Date().toISOString().split('T')[0]
   const [filter, setFilter] = useState<FilterOption>('week')
   const [selectedDate, setSelectedDate] = useState(today)
-  const [selectedWeek, setSelectedWeek] = useState(getWeekKey(today))
+  const [selectedWeekStart, setSelectedWeekStart] = useState(getWeekStart(today))
   const [selectedMonth, setSelectedMonth] = useState(today.slice(0, 7))
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValues, setEditValues] = useState({ category: '', amount: '', date: '', notes: '' })
   const { transactions, formatAmount, updateTransaction, deleteTransaction } = useFinance()
   const { t, translateNote } = useTranslation()
   const transactionCategories = CATEGORIES
-  const selectedPeriod = filter === 'day' ? selectedDate : filter === 'week' ? selectedWeek : filter === 'month' ? selectedMonth : t('history.allPeriod')
+  const selectedWeekEnd = addDays(selectedWeekStart, 6)
+  const selectedPeriod = filter === 'day' ? selectedDate : filter === 'week' ? getWeekLabel(selectedWeekStart) : filter === 'month' ? selectedMonth : t('history.allPeriod')
   const filterOptions = [
     { value: 'day', label: t('history.day'), marker: '01', sample: selectedDate },
-    { value: 'week', label: t('history.week'), marker: '7D', sample: selectedWeek },
+    { value: 'week', label: t('history.week'), marker: '7D', sample: getWeekLabel(selectedWeekStart) },
     { value: 'month', label: t('history.month'), marker: '30', sample: selectedMonth },
     { value: 'all', label: t('history.all'), marker: 'ALL', sample: t('history.allPeriod') },
   ] as const
@@ -47,11 +72,11 @@ export default function Page() {
     () =>
       transactions.filter((transaction) => {
         if (filter === 'day') return transaction.date === selectedDate
-        if (filter === 'week') return getWeekKey(transaction.date) === selectedWeek
+        if (filter === 'week') return transaction.date >= selectedWeekStart && transaction.date <= selectedWeekEnd
         if (filter === 'month') return transaction.date.startsWith(selectedMonth)
         return true
       }),
-    [filter, selectedDate, selectedMonth, selectedWeek, transactions]
+    [filter, selectedDate, selectedMonth, selectedWeekEnd, selectedWeekStart, transactions]
   )
 
   function handleEditClick(transactionId: string) {
@@ -162,23 +187,41 @@ export default function Page() {
                 </span>
               </div>
             ) : (
-              <label className="flex min-h-full flex-col justify-between rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
+              <div className="flex min-h-full flex-col justify-between rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
                 <span>{filter === 'day' ? t('history.chooseDay') : filter === 'week' ? t('history.chooseWeek') : t('history.chooseMonth')}</span>
-                <input
-                  type={filter === 'month' ? 'month' : 'date'}
-                  value={selectedPeriod}
-                  onChange={(event) => {
-                    if (filter === 'day') {
-                      setSelectedDate(event.target.value)
-                    } else if (filter === 'week') {
-                      setSelectedWeek(getWeekKey(event.target.value))
-                    } else {
-                      setSelectedMonth(event.target.value)
-                    }
-                  }}
-                  className="date-picker-input mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
-                />
-              </label>
+                {filter === 'week' ? (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                    <label className="grid gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('history.weekStart')}</span>
+                      <input
+                        type="date"
+                        value={selectedWeekStart}
+                        onChange={(event) => setSelectedWeekStart(event.target.value)}
+                        className="date-picker-input w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                      />
+                    </label>
+                    <div className="grid gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('history.weekEnd')}</span>
+                      <span className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+                        {selectedWeekEnd}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <input
+                    type={filter === 'month' ? 'month' : 'date'}
+                    value={filter === 'day' ? selectedDate : selectedMonth}
+                    onChange={(event) => {
+                      if (filter === 'day') {
+                        setSelectedDate(event.target.value)
+                      } else {
+                        setSelectedMonth(event.target.value)
+                      }
+                    }}
+                    className="date-picker-input mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                  />
+                )}
+              </div>
             )}
           </div>
         </div>

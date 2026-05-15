@@ -184,7 +184,7 @@ export default function Page() {
                         type="number"
                         value={customAmounts[goal.id] ?? ''}
                         onChange={(event) => updateCustomAmount(goal.id, event.target.value)}
-                        placeholder="R$ 0,00"
+                        placeholder={formatAmount(0)}
                         className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                       />
                     </div>

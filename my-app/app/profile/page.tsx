@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabaseclient'
 import { PASSWORD_REQUIREMENTS, getPasswordStrengthError } from '@/lib/password'
 
 type Language = 'pt' | 'en' | 'auto'
+
 type StatusNotice = {
   message: string
   variant: StatusVariant
@@ -25,20 +26,46 @@ function EyeIcon({ hidden }: { hidden: boolean }) {
       <path d="M3 3L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M7.5 7.8C5.4 8.8 3.7 10.4 2.5 12c2.2 3 5.3 5 9.5 5 1.4 0 2.7-.2 3.8-.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M13.9 7.2c3.3.5 5.8 2.4 7.6 4.8-.8 1.1-1.8 2.1-2.9 2.9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M13.9 7.2c3.3.5 5.8 2.4 7.6 4.8-.8 1.1-1.8 2.1-2.9 2.9"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ) : (
     <svg className="h-5 w-5 overflow-visible" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M2.5 12c2.2-3 5.3-5 9.5-5s7.3 2 9.5 5c-2.2 3-5.3 5-9.5 5s-7.3-2-9.5-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M2.5 12c2.2-3 5.3-5 9.5-5s7.3 2 9.5 5c-2.2 3-5.3 5-9.5 5s-7.3-2-9.5-5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <path d="M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   )
 }
 
 export default function Page() {
-  const { user, currency, income, bonus, investmentBase, payday, setCurrency, setIncome, setBonus, setInvestmentBase, setPayday, addTransaction } = useFinance()
+  const {
+    user,
+    currency,
+    income,
+    bonus,
+    investmentBase,
+    payday,
+    setCurrency,
+    setIncome,
+    setBonus,
+    setInvestmentBase,
+    setPayday,
+    addTransaction,
+  } = useFinance()
   const { language, setLanguage } = useLanguage()
   const { t } = useTranslation()
+
   const [name, setName] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -48,14 +75,15 @@ export default function Page() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const profileName = name ?? user?.user_metadata?.full_name ?? ''
+
   const showStatus = (message: string, variant: StatusVariant = 'info') => {
     setNotice({ message, variant })
   }
 
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const cleanName = removeNumbers(profileName).trim()
 
+    const cleanName = removeNumbers(profileName).trim()
     if (!cleanName) return
 
     if (password && password !== confirmPassword) {
@@ -107,6 +135,7 @@ export default function Page() {
       type: 'income',
       notes: t('profile.bonusNote'),
     })
+
     setBonus('0')
     showStatus(t('messages.bonusAdded'), 'success')
   }
@@ -125,6 +154,7 @@ export default function Page() {
       type,
       notes: type === 'expense' ? 'finleaf-investment-add' : 'finleaf-investment-withdraw',
     })
+
     setInvestmentAmount('')
     showStatus(type === 'expense' ? t('messages.investmentAdded') : t('messages.investmentWithdrawn'), 'success')
   }
@@ -150,43 +180,61 @@ export default function Page() {
       <div className="grid gap-6">
         {notice ? <StatusToast message={notice.message} variant={notice.variant} onDismiss={() => setNotice(null)} /> : null}
 
+        {/* Single form for everything that hits Supabase auth (name/password). Currency/plan/prompted inputs persist via FinanceProvider. */}
         <form className="grid gap-6" onSubmit={handleSave}>
+          {/* Conta */}
           <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.account')}</p>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.personalize')}</p>
+            <div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">
+                    {t('profile.account')}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.personalize')}</p>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                {t('profile.name')}
-                <input
-                  value={profileName}
-                  onChange={(event) => setName(removeNumbers(event.target.value))}
-                  className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
-                />
-              </label>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {t('profile.name')}
+                  <input
+                    value={profileName}
+                    onChange={(event) => setName(removeNumbers(event.target.value))}
+                    className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                  />
+                </label>
 
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                {t('profile.currency')}
-                <select
-                  value={currency}
-                  onChange={(event) => setCurrency(event.target.value as 'BRL' | 'USD' | 'EUR')}
-                  className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
-                >
-                  <option value="BRL">Real (BRL)</option>
-                  <option value="USD">{t('profile.dollar')} (USD)</option>
-                  <option value="EUR">Euro (EUR)</option>
-                </select>
-              </label>
+                <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {t('profile.currency')}
+                  <select
+                    value={currency}
+                    onChange={(event) => setCurrency(event.target.value as 'BRL' | 'USD' | 'EUR')}
+                    aria-label={t('profile.currency')}
+                    className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                  >
+                    <option value="BRL">Real (BRL)</option>
+                    <option value="USD">{t('profile.dollar')} (USD)</option>
+                    <option value="EUR">Euro (EUR)</option>
+                  </select>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                className="mt-6 w-full rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 sm:w-auto"
+              >
+                {t('profile.save')}
+              </button>
             </div>
           </section>
 
+          {/* Plano mensal */}
           <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.monthlyPlan')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">
+                {t('profile.monthlyPlan')}
+              </p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.monthlyPlanDesc')}</p>
             </div>
 
@@ -224,11 +272,22 @@ export default function Page() {
               </label>
             </div>
             <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">{t('profile.investmentBaseDesc')}</p>
+
+            <button
+              type="submit"
+              className="mt-6 w-full rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 sm:w-auto"
+            >
+              {t('profile.save')}
+            </button>
           </section>
 
+
+          {/* Movimentos pontuais */}
           <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.manualMovements')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">
+                {t('profile.manualMovements')}
+              </p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('profile.manualMovementsDesc')}</p>
             </div>
 
@@ -276,11 +335,15 @@ export default function Page() {
                 </div>
               </label>
             </div>
+
           </section>
 
+          {/* Security (password -> Supabase) */}
           <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('profile.security')}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">
+                {t('profile.security')}
+              </p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{PASSWORD_REQUIREMENTS}</p>
             </div>
 
@@ -326,6 +389,7 @@ export default function Page() {
           </section>
         </form>
 
+        {/* Language */}
         <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -350,6 +414,7 @@ export default function Page() {
           </div>
         </section>
 
+        {/* Logout */}
         <section className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -373,3 +438,4 @@ export default function Page() {
     </NavigationLayout>
   )
 }
+

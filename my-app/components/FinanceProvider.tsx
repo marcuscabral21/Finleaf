@@ -385,8 +385,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         .order('created_at', { ascending: false }),
     ])
 
-    if (settingsResult.data?.currency && ['BRL', 'USD', 'EUR'].includes(settingsResult.data.currency)) {
-      setCurrencyState(settingsResult.data.currency as Currency)
+    const loadedCurrency = settingsResult.data?.currency
+    if (typeof loadedCurrency === 'string') {
+      const normalized = loadedCurrency.trim().toUpperCase()
+      if (['BRL', 'USD', 'EUR'].includes(normalized)) {
+        setCurrencyState(normalized as Currency)
+      } else {
+        setCurrencyState(defaultCurrency)
+      }
     } else {
       setCurrencyState(defaultCurrency)
     }
@@ -658,11 +664,20 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     setCurrencyState(value)
     if (!user) return
 
-    void supabase.from('user_settings').upsert({
-      user_id: user.id,
-      currency: value,
-      updated_at: new Date().toISOString(),
-    })
+    void supabase
+      .from('user_settings')
+      .upsert({
+        user_id: user.id,
+        currency: value,
+        updated_at: new Date().toISOString(),
+      })
+      .then(({ error }) => {
+        // Se falhar a persistir no DB, pelo menos mantém a moeda atual em memória.
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to persist currency:', error)
+        }
+      })
   }
 
   const setIncome = (value: string) => {
