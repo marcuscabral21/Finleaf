@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-
+import { useEffect, useState } from 'react'
 
 import NavigationLayout from '@/components/NavigationLayout'
 import { useFinance } from '@/components/FinanceProvider'
