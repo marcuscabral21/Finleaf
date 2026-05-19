@@ -3,8 +3,9 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import StatusToast, { type StatusVariant } from '@/components/StatusToast'
+import { useTranslation } from '@/components/useTranslation'
 import { supabase } from '@/lib/supabaseclient'
-import { PASSWORD_REQUIREMENTS, getPasswordStrengthError } from '@/lib/password'
+import { getPasswordRequirements, getPasswordStrengthError } from '@/lib/password'
 
 type StatusNotice = {
   message: string
@@ -14,6 +15,7 @@ type StatusNotice = {
 export default function ResetPasswordClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t, currentLanguage } = useTranslation()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [statusNotice, setStatusNotice] = useState<StatusNotice | null>(null)
@@ -27,21 +29,21 @@ export default function ResetPasswordClient() {
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setRecoveryActive(true)
-        setStatusNotice({ message: 'Link de recuperação detectado. Defina sua nova senha abaixo.', variant: 'info' })
+        setStatusNotice({ message: t('messages.recoveryLinkDetected'), variant: 'info' })
       }
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [t])
 
   const recoveryRedirectNotice = useMemo<StatusNotice | null>(() => {
     if (!recoveryActive && searchParams.get('type') === 'recovery') {
-      return { message: 'Email de recuperação enviado. Clique no link do email para continuar.', variant: 'info' }
+      return { message: t('messages.recoveryLinkNeeded'), variant: 'info' }
     }
     return null
-  }, [searchParams, recoveryActive])
+  }, [searchParams, recoveryActive, t])
 
   const activeStatusNotice = statusNotice || (redirectNoticeDismissed ? null : recoveryRedirectNotice)
   const showStatus = (message: string, variant: StatusVariant = 'info') => {
@@ -59,16 +61,16 @@ export default function ResetPasswordClient() {
     event.preventDefault()
 
     if (!password || !confirmPassword) {
-      showStatus('Preencha a nova password e a confirmação.', 'error')
+      showStatus(t('messages.resetRequiredFields'), 'error')
       return
     }
 
     if (password !== confirmPassword) {
-      showStatus('As passwords não coincidem. Verifique e tente novamente.', 'error')
+      showStatus(t('messages.resetPasswordMismatch'), 'error')
       return
     }
 
-    const passwordError = getPasswordStrengthError(password)
+    const passwordError = getPasswordStrengthError(password, currentLanguage)
     if (passwordError) {
       showStatus(passwordError, 'error')
       return
@@ -86,7 +88,7 @@ export default function ResetPasswordClient() {
       return
     }
 
-    showStatus('Password atualizada com sucesso. A redirecionar para o login...', 'success')
+    showStatus(t('messages.passwordUpdated'), 'success')
     setTimeout(() => {
       router.push('/')
     }, 1800)
@@ -96,9 +98,9 @@ export default function ResetPasswordClient() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_26%)] px-3 py-4 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-8">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:gap-8 sm:rounded-[32px] sm:p-10">
         <div className="space-y-3">
-          <h1 className="text-2xl font-semibold sm:text-3xl">Recuperar senha</h1>
+          <h1 className="text-2xl font-semibold sm:text-3xl">{t('reset.title')}</h1>
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            Use o link de recuperação que foi enviado por email. Esta página conclui o reset de senha usando o link de recuperação do Supabase.
+            {t('reset.description')}
           </p>
         </div>
 
@@ -112,25 +114,25 @@ export default function ResetPasswordClient() {
 
         <form className="grid gap-5" onSubmit={handleSubmit}>
           <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-            Nova senha
+            {t('reset.newPassword')}
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Nova senha"
+              placeholder={t('reset.newPasswordPlaceholder')}
               minLength={12}
               autoComplete="new-password"
               className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
             />
-            <span className="text-xs text-slate-500 dark:text-slate-400">{PASSWORD_REQUIREMENTS}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{getPasswordRequirements(currentLanguage)}</span>
           </label>
           <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-            Confirmar senha
+            {t('reset.confirmPassword')}
             <input
               type="password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              placeholder="Confirme a nova senha"
+              placeholder={t('reset.confirmPasswordPlaceholder')}
               minLength={12}
               autoComplete="new-password"
               className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
@@ -141,7 +143,7 @@ export default function ResetPasswordClient() {
             disabled={loading}
             className="rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? 'Atualizando...' : 'Atualizar senha'}
+            {loading ? t('reset.updating') : t('reset.submit')}
           </button>
         </form>
 
@@ -150,7 +152,7 @@ export default function ResetPasswordClient() {
           onClick={() => router.push('/')}
           className="rounded-full border border-slate-200 px-6 py-3 text-center text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
         >
-          Voltar para login
+          {t('reset.backToLogin')}
         </button>
       </div>
     </main>

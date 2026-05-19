@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useLanguage } from './LanguageProvider'
 
 const translations = {
@@ -7,10 +8,10 @@ const translations = {
     'nav.history': 'Histórico',
     'nav.goals': 'Metas',
     'nav.profile': 'Perfil',
-    'nav.manageMoney': 'Gerencie seu dinheiro',
-    'nav.description': 'Acompanhe gastos, metas e sua economia em um só lugar.',
+    'nav.manageMoney': 'Gerencie o seu dinheiro',
+    'nav.description': 'Acompanhe gastos, metas e a sua poupança num só lugar.',
     'nav.finleafTip': 'Dica do Finleaf',
-    'nav.tipDescription': 'Use a aba Histórico para filtrar gastos por dia, semana ou mês e veja para onde seu dinheiro está indo.',
+    'nav.tipDescription': 'Use a aba Histórico para filtrar gastos por dia, semana ou mês e veja para onde o seu dinheiro está indo.',
     'nav.dashboard': 'Painel',
     'nav.transactions': 'Transações',
     'nav.account': 'Conta',
@@ -20,16 +21,16 @@ const translations = {
     'dashboard.subtitle': 'Visão geral das suas finanças',
     'dashboard.available': 'Dinheiro disponível',
     'dashboard.spent': 'Total gasto',
-    'dashboard.savings': 'Economia',
+    'dashboard.savings': 'Poupança',
     'dashboard.categories': 'Gastos por categoria',
     'dashboard.categoriesDesc': 'Passe o mouse pelas cores para ver detalhes.',
     'dashboard.summary': 'Resumo',
     'dashboard.income': 'Receitas',
     'dashboard.expenses': 'Despesas',
     'dashboard.investments': 'Investimentos',
-    'dashboard.trendUpLastMonth': '+12.5% no último mês',
-    'dashboard.trendDownPreviousMonth': '-8.3% em relação ao mês anterior',
-    'dashboard.savingsTrend': '+5.2% no último mês',
+    'dashboard.trendUpLastMonth': '+12,5% no último mês',
+    'dashboard.trendDownPreviousMonth': '-8,3% em relação ao mês anterior',
+    'dashboard.savingsTrend': '+5,2% no último mês',
     'dashboard.recentHistory': 'Histórico recente',
     'dashboard.recentHistoryDesc': 'Acompanhe as últimas transações e edite ou remova quando precisar.',
     'dashboard.allExpenses': 'Todos os gastos',
@@ -41,7 +42,7 @@ const translations = {
     'history.title': 'Histórico',
     'history.subtitle': 'Todos os seus gastos',
     'history.filters': 'Filtros',
-    'history.filtersDesc': 'Selecione o período para ver suas transações recentes.',
+    'history.filtersDesc': 'Selecione o período para ver as suas transações recentes.',
     'history.day': 'Dia',
     'history.week': 'Semana',
     'history.month': 'Mês',
@@ -75,7 +76,7 @@ const translations = {
 
     // Goals
     'goals.title': 'Metas',
-    'goals.subtitle': 'Acompanhe seus objetivos financeiros',
+    'goals.subtitle': 'Acompanhe os seus objetivos financeiros',
     'goals.add': 'Adicionar nova meta',
     'goals.name': 'Nome da meta',
     'goals.target': 'Valor alvo',
@@ -99,7 +100,7 @@ const translations = {
     // Profile
     'profile.title': 'Perfil',
     'profile.subtitle': 'Ajustes de moeda e conta',
-    'profile.personalize': 'Personalize seu perfil financeiro',
+    'profile.personalize': 'Personalize o seu perfil financeiro',
     'profile.name': 'Nome',
     'profile.currency': 'Moeda',
     'profile.dollar': 'Dólar',
@@ -122,9 +123,9 @@ const translations = {
     'profile.languageDesc': 'Escolha o idioma da aplicação.',
     'profile.auto': 'Automático (do navegador)',
     'profile.portuguese': 'Português',
-    'profile.english': 'English',
+    'profile.english': 'Inglês',
     'profile.account': 'Conta',
-    'profile.accountDesc': 'Gerencie sua conta e sessões.',
+    'profile.accountDesc': 'Gerencie a sua conta e sessões.',
     'profile.monthlyPlan': 'Plano mensal',
     'profile.monthlyPlanDesc': 'Valores que se repetem automaticamente no dia de recebimento.',
     'profile.manualMovements': 'Movimentos pontuais',
@@ -133,9 +134,41 @@ const translations = {
     'profile.logout': 'Fazer logout',
     'profile.loggingOut': 'A sair...',
 
+    // Auth
+    'auth.createAccount': 'Criar conta',
+    'auth.createAccountDesc': 'Comece a sua jornada com o Finleaf e acompanhe os seus hábitos financeiros desde já.',
+    'auth.name': 'Nome',
+    'auth.namePlaceholder': 'O seu nome',
+    'auth.email': 'Email',
+    'auth.password': 'Password',
+    'auth.passwordPlaceholder': 'A sua password',
+    'auth.hidePassword': 'Ocultar password',
+    'auth.showPassword': 'Mostrar password',
+    'auth.creating': 'A criar...',
+    'auth.signUp': 'Registar',
+    'auth.signIn': 'Entrar',
+    'auth.signingIn': 'A entrar...',
+    'auth.welcomeBack': 'Bem-vindo de volta',
+    'auth.welcomeBackDesc': 'Se já tem uma conta, entre e continue a gerir as suas finanças.',
+    'auth.signInDesc': 'Use as suas credenciais Supabase para aceder à conta e gerir o seu painel financeiro.',
+    'auth.forgotPassword': 'Esqueceu-se da password?',
+    'auth.noAccount': 'Ainda não tem conta?',
+    'auth.noAccountDesc': 'Registe-se agora para começar a usar o Finleaf e manter a sua vida financeira organizada.',
+
+    // Reset password
+    'reset.title': 'Recuperar password',
+    'reset.description': 'Use o link de recuperação enviado por email. Esta página conclui a reposição da password usando o link de recuperação do Supabase.',
+    'reset.newPassword': 'Nova password',
+    'reset.newPasswordPlaceholder': 'Nova password',
+    'reset.confirmPassword': 'Confirmar password',
+    'reset.confirmPasswordPlaceholder': 'Confirme a nova password',
+    'reset.updating': 'A atualizar...',
+    'reset.submit': 'Atualizar password',
+    'reset.backToLogin': 'Voltar para o login',
+
     // Modals
-    'modal.add': 'Adicionar Transação',
-    'modal.edit': 'Editar Transação',
+    'modal.add': 'Adicionar transação',
+    'modal.edit': 'Editar transação',
     'modal.category': 'Categoria',
     'modal.amount': 'Valor',
     'modal.date': 'Data',
@@ -163,11 +196,11 @@ const translations = {
     'dashboard.category.leisure': 'Lazer',
     'dashboard.category.houseDesc': 'Aluguel e contas essenciais',
     'dashboard.category.shoppingDesc': 'Supermercado, roupas e itens pessoais',
-    'dashboard.category.transportDesc': 'Viagens, combustÃ­vel e apps de mobilidade',
+    'dashboard.category.transportDesc': 'Viagens, combustível e apps de mobilidade',
     'dashboard.category.leisureDesc': 'Streaming, cinema e atividades sociais',
 
     // Messages
-    'messages.passwordMismatch': 'As senhas não coincidem. Por favor, verifique.',
+    'messages.passwordMismatch': 'As passwords não coincidem. Por favor, verifique.',
     'messages.success': 'Configurações atualizadas com sucesso!',
     'messages.logout': 'Logout realizado com sucesso!',
     'messages.invalidBonus': 'Informe um bônus maior que zero.',
@@ -175,6 +208,18 @@ const translations = {
     'messages.invalidInvestment': 'Informe um investimento maior que zero.',
     'messages.investmentAdded': 'Investimento adicionado ao histórico.',
     'messages.investmentWithdrawn': 'Retirada de investimento adicionada ao histórico.',
+    'messages.emailConfirmed': 'Email confirmado com sucesso! Entre com a sua password.',
+    'messages.accountCreated': 'Conta criada com sucesso! Verifique o seu email para confirmar a conta antes de entrar.',
+    'messages.emailNotConfirmed': 'Email não confirmado. Verifique a sua caixa de entrada e confirme a conta antes de entrar.',
+    'messages.loginSuccess': 'Login realizado com sucesso! Bem-vindo(a) ao Finleaf.',
+    'messages.emailRequiredForRecovery': 'Insira o seu email primeiro para enviarmos o link de recuperação.',
+    'messages.tooManyRecoveryEmails': 'Muitos emails foram enviados recentemente. Aguarde alguns minutos e tente novamente.',
+    'messages.recoveryEmailSent': 'Email de recuperação enviado. Verifique a sua caixa de entrada.',
+    'messages.recoveryLinkDetected': 'Link de recuperação detectado. Defina a sua nova password abaixo.',
+    'messages.recoveryLinkNeeded': 'Email de recuperação enviado. Clique no link do email para continuar.',
+    'messages.resetRequiredFields': 'Preencha a nova password e a confirmação.',
+    'messages.resetPasswordMismatch': 'As passwords não coincidem. Verifique e tente novamente.',
+    'messages.passwordUpdated': 'Password atualizada com sucesso. A redirecionar para o login...',
     'notes.goalContribution': 'Contribuição para meta',
     'notes.goalWithdrawal': 'Retirada da meta',
     'notes.monthlyInvestment': 'Investimento mensal base',
@@ -313,9 +358,41 @@ const translations = {
     'profile.logout': 'Log out',
     'profile.loggingOut': 'Logging out...',
 
+    // Auth
+    'auth.createAccount': 'Create account',
+    'auth.createAccountDesc': 'Start your journey with Finleaf and track your financial habits right away.',
+    'auth.name': 'Name',
+    'auth.namePlaceholder': 'Your name',
+    'auth.email': 'Email',
+    'auth.password': 'Password',
+    'auth.passwordPlaceholder': 'Your password',
+    'auth.hidePassword': 'Hide password',
+    'auth.showPassword': 'Show password',
+    'auth.creating': 'Creating...',
+    'auth.signUp': 'Sign up',
+    'auth.signIn': 'Sign in',
+    'auth.signingIn': 'Signing in...',
+    'auth.welcomeBack': 'Welcome back',
+    'auth.welcomeBackDesc': 'If you already have an account, just sign in and continue managing your finances.',
+    'auth.signInDesc': 'Use your Supabase credentials to access your account and manage your finance dashboard.',
+    'auth.forgotPassword': 'Forgot your password?',
+    'auth.noAccount': "Don't have an account?",
+    'auth.noAccountDesc': 'Sign up now to start using Finleaf and keep your financial life organized.',
+
+    // Reset password
+    'reset.title': 'Reset password',
+    'reset.description': 'Use the recovery link sent by email. This page completes the password reset using the Supabase recovery link.',
+    'reset.newPassword': 'New password',
+    'reset.newPasswordPlaceholder': 'New password',
+    'reset.confirmPassword': 'Confirm password',
+    'reset.confirmPasswordPlaceholder': 'Confirm the new password',
+    'reset.updating': 'Updating...',
+    'reset.submit': 'Update password',
+    'reset.backToLogin': 'Back to login',
+
     // Modals
-    'modal.add': 'Add Transaction',
-    'modal.edit': 'Edit Transaction',
+    'modal.add': 'Add transaction',
+    'modal.edit': 'Edit transaction',
     'modal.category': 'Category',
     'modal.amount': 'Amount',
     'modal.date': 'Date',
@@ -336,7 +413,7 @@ const translations = {
     'categories.investimentos': 'Investments',
     'categories.renda': 'Income',
     'categories.transporte': 'Transport',
-    'categories.outros': 'Others',
+    'categories.outros': 'Other',
     'dashboard.category.house': 'Home',
     'dashboard.category.shopping': 'Shopping',
     'dashboard.category.transport': 'Transport',
@@ -355,6 +432,18 @@ const translations = {
     'messages.invalidInvestment': 'Enter an investment greater than zero.',
     'messages.investmentAdded': 'Investment added to history.',
     'messages.investmentWithdrawn': 'Investment withdrawal added to history.',
+    'messages.emailConfirmed': 'Email confirmed successfully! Sign in with your password.',
+    'messages.accountCreated': 'Account created successfully! Check your email to confirm the account before signing in.',
+    'messages.emailNotConfirmed': 'Email not confirmed. Check your inbox and confirm your account before signing in.',
+    'messages.loginSuccess': 'Login successful! Welcome to Finleaf.',
+    'messages.emailRequiredForRecovery': 'Enter your email first so we can send the recovery link.',
+    'messages.tooManyRecoveryEmails': 'Too many emails were sent recently. Wait a few minutes and try again.',
+    'messages.recoveryEmailSent': 'Recovery email sent. Check your inbox.',
+    'messages.recoveryLinkDetected': 'Recovery link detected. Set your new password below.',
+    'messages.recoveryLinkNeeded': 'Recovery email sent. Click the link in the email to continue.',
+    'messages.resetRequiredFields': 'Fill in the new password and confirmation.',
+    'messages.resetPasswordMismatch': 'Passwords do not match. Check them and try again.',
+    'messages.passwordUpdated': 'Password updated successfully. Redirecting to login...',
     'notes.goalContribution': 'Goal contribution',
     'notes.goalWithdrawal': 'Goal withdrawal',
     'notes.monthlyInvestment': 'Base monthly investment',
@@ -366,16 +455,17 @@ const translations = {
 export function useTranslation() {
   const { currentLanguage } = useLanguage()
 
-  const t = (key: string): string => {
+  const t = useCallback((key: string): string => {
     return translations[currentLanguage][key as keyof typeof translations.pt] || key
-  }
+  }, [currentLanguage])
 
-  const translateNote = (note?: string): string | undefined => {
+  const translateNote = useCallback((note?: string): string | undefined => {
     if (!note) {
       return undefined
     }
 
     const contributionPrefix = 'Contribuição para meta: '
+    const legacyContributionPrefix = 'ContribuiÃ§Ã£o para meta: '
     const withdrawalPrefix = 'Retirada da meta: '
     const stableContributionPrefix = 'finleaf-goal-contribution:'
     const stableWithdrawalPrefix = 'finleaf-goal-withdrawal:'
@@ -383,6 +473,10 @@ export function useTranslation() {
 
     if (note.startsWith(contributionPrefix)) {
       return `${t('notes.goalContribution')}: ${note.slice(contributionPrefix.length)}`
+    }
+
+    if (note.startsWith(legacyContributionPrefix)) {
+      return `${t('notes.goalContribution')}: ${note.slice(legacyContributionPrefix.length)}`
     }
 
     if (note.startsWith(withdrawalPrefix)) {
@@ -410,7 +504,7 @@ export function useTranslation() {
     }
 
     return note
-  }
+  }, [t])
 
-  return { t, translateNote }
+  return { t, translateNote, currentLanguage }
 }

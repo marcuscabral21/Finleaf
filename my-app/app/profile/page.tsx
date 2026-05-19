@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import NavigationLayout from '@/components/NavigationLayout'
 import { useFinance } from '@/components/FinanceProvider'
@@ -8,7 +8,7 @@ import { useLanguage } from '@/components/LanguageProvider'
 import StatusToast, { type StatusVariant } from '@/components/StatusToast'
 import { useTranslation } from '@/components/useTranslation'
 import { supabase } from '@/lib/supabaseclient'
-import { PASSWORD_REQUIREMENTS, getPasswordStrengthError } from '@/lib/password'
+import { getPasswordRequirements, getPasswordStrengthError } from '@/lib/password'
 
 type Language = 'pt' | 'en' | 'auto'
 
@@ -65,7 +65,7 @@ export default function Page() {
     addTransaction,
   } = useFinance()
   const { language, setLanguage } = useLanguage()
-  const { t } = useTranslation()
+  const { t, currentLanguage } = useTranslation()
 
   const [name, setName] = useState<string | null>(null)
   const [password, setPassword] = useState('')
@@ -105,7 +105,7 @@ export default function Page() {
     }
 
     if (password) {
-      const passwordError = getPasswordStrengthError(password)
+      const passwordError = getPasswordStrengthError(password, currentLanguage)
       if (passwordError) {
         showStatus(passwordError, 'error')
         return
@@ -360,7 +360,7 @@ export default function Page() {
               <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">
                 {t('profile.security')}
               </p>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{PASSWORD_REQUIREMENTS}</p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{getPasswordRequirements(currentLanguage)}</p>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -379,7 +379,7 @@ export default function Page() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-                    aria-label={showPassword ? 'Ocultar password' : 'Mostrar password'}
+                    aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     <EyeIcon hidden={showPassword} />
                   </button>
@@ -454,4 +454,3 @@ export default function Page() {
     </NavigationLayout>
   )
 }
-

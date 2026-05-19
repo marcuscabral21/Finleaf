@@ -236,6 +236,14 @@ function getScheduledIncomeDate(payday: string) {
   return new Date(year, month, day)
 }
 
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 function getMonthlyIncomeNote(monthKey: string) {
   return `finleaf-monthly-income:${monthKey}`
 }
@@ -475,7 +483,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     }
 
     const monthKey = `${scheduledDate.getFullYear()}-${String(scheduledDate.getMonth() + 1).padStart(2, '0')}`
-    const scheduledDateText = scheduledDate.toISOString().split('T')[0]
+    const scheduledDateText = formatLocalDate(scheduledDate)
     const monthlyIncomeNote = getMonthlyIncomeNote(monthKey)
     const skippedMonthlyIncomeMonths = getSkippedMonthlyIncomeMonths(user.id)
     if (skippedMonthlyIncomeMonths.includes(monthKey)) {
@@ -574,7 +582,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     }
 
     const monthKey = `${scheduledDate.getFullYear()}-${String(scheduledDate.getMonth() + 1).padStart(2, '0')}`
-    const scheduledDateText = scheduledDate.toISOString().split('T')[0]
+    const scheduledDateText = formatLocalDate(scheduledDate)
     const monthlyInvestmentNote = getMonthlyInvestmentNote(monthKey)
     const skippedMonthlyInvestmentMonths = getSkippedMonthlyInvestmentMonths(user.id)
     if (skippedMonthlyInvestmentMonths.includes(monthKey)) {
@@ -674,7 +682,6 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       .then(({ error }) => {
         // Se falhar a persistir no DB, pelo menos mantém a moeda atual em memória.
         if (error) {
-          // eslint-disable-next-line no-console
           console.error('Failed to persist currency:', error)
         }
       })
@@ -772,7 +779,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     if (!user) return
 
     const deletedTransaction = transactions.find((transaction) => transaction.id === id)
-    const scheduledIncomeDate = getScheduledIncomeDate(payday).toISOString().split('T')[0]
+    const scheduledIncomeDate = formatLocalDate(getScheduledIncomeDate(payday))
     const deletedMonthKey = deletedTransaction ? getMonthKeyFromDate(deletedTransaction.date) : null
     const isDeletedMonthlyIncome =
       deletedTransaction?.type === 'income' &&

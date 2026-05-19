@@ -4,8 +4,9 @@ import { FormEvent, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import StatusToast, { type StatusVariant } from '@/components/StatusToast'
+import { useTranslation } from '@/components/useTranslation'
 import { supabase } from '@/lib/supabaseclient'
-import { PASSWORD_REQUIREMENTS, getPasswordStrengthError } from '@/lib/password'
+import { getPasswordRequirements, getPasswordStrengthError } from '@/lib/password'
 
 function removeNumbers(value: string) {
   return value.replace(/\d/g, '')
@@ -36,24 +37,22 @@ function FinleafLogo() {
   return (
     <div className="mb-4 flex items-center gap-3 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:mb-8">
       <div className="inline-flex h-16 items-center justify-center gap-2 sm:h-20 sm:gap-3">
-        {/* Dark theme: WhiteFinleaf + WhitePlant */}
         <div className="hidden dark:flex dark:items-center dark:gap-3">
           <Image src="/WhiteFinleaf.svg" alt="Finleaf logo" width={112} height={80} className="h-16 w-24 object-contain sm:h-20 sm:w-28" priority />
           <Image src="/WhitePlant.svg" alt="Plant" width={64} height={64} className="h-12 w-12 object-contain sm:h-16 sm:w-16" priority />
         </div>
-        {/* Light theme: same white SVGs inverted to black for identical weight */}
         <div className="flex items-center gap-3 dark:hidden">
           <Image src="/WhiteFinleaf.svg" alt="Finleaf logo" width={112} height={80} className="h-16 w-24 object-contain filter invert sm:h-20 sm:w-28" priority />
           <Image src="/WhitePlant.svg" alt="Plant" width={64} height={64} className="h-12 w-12 object-contain filter invert sm:h-16 sm:w-16" priority />
         </div>
       </div>
-
     </div>
   )
 }
 
 export default function HomeClient() {
   const router = useRouter()
+  const { t, currentLanguage } = useTranslation()
   const [isSignUp, setIsSignUp] = useState(true)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -66,10 +65,10 @@ export default function HomeClient() {
 
   const queryStatusNotice = useMemo<StatusNotice | null>(() => {
     if (searchParams.get('emailConfirmed') === 'true' || searchParams.get('type') === 'signup') {
-      return { message: 'Email confirmado com sucesso! Faça login com sua senha.', variant: 'success' }
+      return { message: t('messages.emailConfirmed'), variant: 'success' }
     }
     return null
-  }, [searchParams])
+  }, [searchParams, t])
 
   const activeStatusNotice = statusNotice || (queryNoticeDismissed ? null : queryStatusNotice)
   const showStatus = (message: string, variant: StatusVariant = 'info') => {
@@ -89,7 +88,7 @@ export default function HomeClient() {
 
     if (!cleanName) return
 
-    const passwordError = getPasswordStrengthError(password)
+    const passwordError = getPasswordStrengthError(password, currentLanguage)
     if (passwordError) {
       showStatus(passwordError, 'error')
       return
@@ -116,7 +115,7 @@ export default function HomeClient() {
       return
     }
 
-    showStatus('Conta criada com sucesso! Verifique seu email para confirmar a conta antes de fazer login.', 'success')
+    showStatus(t('messages.accountCreated'), 'success')
   }
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
@@ -133,14 +132,14 @@ export default function HomeClient() {
 
     if (error) {
       if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed')) {
-        showStatus('Email não confirmado. Verifique sua caixa de entrada e confirme sua conta antes de fazer login.', 'error')
+        showStatus(t('messages.emailNotConfirmed'), 'error')
       } else {
         showStatus(error.message, 'error')
       }
       return
     }
 
-    showStatus('Login realizado com sucesso! Bem-vindo(a) ao Finleaf.', 'success')
+    showStatus(t('messages.loginSuccess'), 'success')
     console.log('User signed in:', data.user)
     router.push('/')
     router.refresh()
@@ -148,7 +147,7 @@ export default function HomeClient() {
 
   const handleForgotPassword = async () => {
     if (!email) {
-      showStatus('Insira o seu email primeiro para enviarmos o link de recuperação.', 'info')
+      showStatus(t('messages.emailRequiredForRecovery'), 'info')
       return
     }
 
@@ -163,14 +162,14 @@ export default function HomeClient() {
 
     if (error) {
       if (error.message.includes('rate limit') || error.message.includes('Rate limit')) {
-        showStatus('Muitos emails foram enviados recentemente. Aguarde alguns minutos e tente novamente.', 'error')
+        showStatus(t('messages.tooManyRecoveryEmails'), 'error')
       } else {
         showStatus(error.message, 'error')
       }
       return
     }
 
-    showStatus('Email de recuperação enviado. Verifique sua caixa de entrada.', 'success')
+    showStatus(t('messages.recoveryEmailSent'), 'success')
   }
 
   return (
@@ -182,27 +181,25 @@ export default function HomeClient() {
 
         <div className="relative overflow-hidden rounded-[26px] border border-slate-200 bg-white/85 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px]">
           <div className={`flex w-[200%] transition-transform duration-700 ease-in-out ${isSignUp ? 'translate-x-0' : '-translate-x-1/2'}`}>
-            {/* Sign Up View */}
             <div className="basis-1/2 shrink-0 flex">
-              {/* Form Section (2/3) */}
               <section className="flex w-full flex-col justify-center gap-6 px-4 py-8 sm:px-8 sm:py-10 md:w-2/3 md:px-14 md:py-14">
                 <div>
-                  <p className="text-lg font-semibold">Create Account</p>
-                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">Start your journey with Finleaf and track your financial habits right away.</p>
+                  <p className="text-lg font-semibold">{t('auth.createAccount')}</p>
+                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{t('auth.createAccountDesc')}</p>
                 </div>
                 <form className="flex flex-col gap-4" onSubmit={handleSignUp}>
                   <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Nome
+                    {t('auth.name')}
                     <input
                       value={name}
                       onChange={(event) => setName(removeNumbers(event.target.value))}
                       required
                       className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
-                      placeholder="Seu nome"
+                      placeholder={t('auth.namePlaceholder')}
                     />
                   </label>
                   <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Email
+                    {t('auth.email')}
                     <input
                       type="email"
                       value={email}
@@ -213,7 +210,7 @@ export default function HomeClient() {
                     />
                   </label>
                   <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Password
+                    {t('auth.password')}
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
@@ -223,67 +220,63 @@ export default function HomeClient() {
                         minLength={12}
                         autoComplete="new-password"
                         className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
-                        placeholder="Sua senha"
+                        placeholder={t('auth.passwordPlaceholder')}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-                        aria-label={showPassword ? 'Ocultar password' : 'Mostrar password'}
+                        aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                       >
                         <EyeIcon hidden={showPassword} />
                       </button>
                     </div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">{PASSWORD_REQUIREMENTS}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">{getPasswordRequirements(currentLanguage)}</span>
                   </label>
                   <button
                     type="submit"
                     disabled={loading}
                     className="rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {loading ? 'Criando...' : 'Sign Up'}
+                    {loading ? t('auth.creating') : t('auth.signUp')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsSignUp(false)}
                     className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900 md:hidden"
                   >
-                    Sign In
+                    {t('auth.signIn')}
                   </button>
                 </form>
               </section>
 
-              {/* CTA Section (1/3) */}
               <section className="relative hidden w-1/3 flex-col justify-center gap-6 bg-gradient-to-br from-slate-400 to-slate-500 px-8 py-14 text-white dark:from-slate-600 dark:to-slate-700 md:flex md:px-10">
-                {/* Plant Logo */}
                 <div className="absolute top-6 left-6">
                   <Image src="/WhitePlant.svg" alt="Plant" width={48} height={48} className="h-12 w-12 object-contain filter invert dark:filter-none" />
                 </div>
                 <div>
-                  <p className="text-lg font-semibold">Welcome Back</p>
-                  <p className="mt-3 max-w-[14rem] text-sm text-slate-300 dark:text-slate-200">If you already have an account, just sign in and continue managing your finances.</p>
+                  <p className="text-lg font-semibold">{t('auth.welcomeBack')}</p>
+                  <p className="mt-3 max-w-[14rem] text-sm text-slate-300 dark:text-slate-200">{t('auth.welcomeBackDesc')}</p>
                 </div>
                 <button
                   type="button"
                   className="inline-flex max-w-max items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-slate-950/30 transition hover:bg-slate-50"
                   onClick={() => setIsSignUp(false)}
                 >
-                  Sign In
+                  {t('auth.signIn')}
                 </button>
               </section>
             </div>
 
-            {/* Sign In View */}
             <div className="basis-1/2 shrink-0 flex">
-              {/* Form Section (2/3) */}
               <section className="flex w-full flex-col justify-center gap-6 px-4 py-8 sm:px-8 sm:py-10 md:w-2/3 md:px-14 md:py-14">
                 <div>
-                  <p className="text-lg font-semibold">Sign In</p>
-                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">Use your Supabase credentials to access your account and manage your finance dashboard.</p>
+                  <p className="text-lg font-semibold">{t('auth.signIn')}</p>
+                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{t('auth.signInDesc')}</p>
                 </div>
                 <form className="flex flex-col gap-4" onSubmit={handleSignIn}>
                   <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Email
+                    {t('auth.email')}
                     <input
                       type="email"
                       value={email}
@@ -294,7 +287,7 @@ export default function HomeClient() {
                     />
                   </label>
                   <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Password
+                    {t('auth.password')}
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
@@ -303,13 +296,13 @@ export default function HomeClient() {
                         required
                         autoComplete="current-password"
                         className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
-                        placeholder="Sua senha"
+                        placeholder={t('auth.passwordPlaceholder')}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-                        aria-label={showPassword ? 'Ocultar password' : 'Mostrar password'}
+                        aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                       >
                         <EyeIcon hidden={showPassword} />
                       </button>
@@ -322,7 +315,7 @@ export default function HomeClient() {
                       disabled={loading}
                       className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 transition disabled:opacity-60"
                     >
-                      Forgot your password  ?
+                      {t('auth.forgotPassword')}
                     </button>
                   </div>
                   <button
@@ -330,34 +323,32 @@ export default function HomeClient() {
                     disabled={loading}
                     className="rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {loading ? 'Logging in...' : 'Sign In'}
+                    {loading ? t('auth.signingIn') : t('auth.signIn')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsSignUp(true)}
                     className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900 md:hidden"
                   >
-                    Sign Up
+                    {t('auth.signUp')}
                   </button>
                 </form>
               </section>
 
-              {/* CTA Section (1/3) */}
               <section className="relative hidden w-1/3 flex-col justify-center gap-6 bg-gradient-to-br from-slate-400 to-slate-500 px-8 py-14 text-white dark:from-slate-600 dark:to-slate-700 md:flex md:px-10">
-                {/* Plant Logo */}
                 <div className="absolute top-6 left-6">
                   <Image src="/WhitePlant.svg" alt="Plant" width={48} height={48} className="h-12 w-12 object-contain filter invert dark:filter-none" />
                 </div>
                 <div>
-                  <p className="text-lg font-semibold">Don&apos;t have an account?</p>
-                  <p className="mt-3 max-w-[14rem] text-sm text-slate-300 dark:text-slate-200">Sign up now to start using Finleaf and keep your financial life organized.</p>
+                  <p className="text-lg font-semibold">{t('auth.noAccount')}</p>
+                  <p className="mt-3 max-w-[14rem] text-sm text-slate-300 dark:text-slate-200">{t('auth.noAccountDesc')}</p>
                 </div>
                 <button
                   type="button"
                   className="inline-flex max-w-max items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-slate-950/30 transition hover:bg-slate-50"
                   onClick={() => setIsSignUp(true)}
                 >
-                  Sign Up
+                  {t('auth.signUp')}
                 </button>
               </section>
             </div>
