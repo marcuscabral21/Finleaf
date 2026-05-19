@@ -656,16 +656,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const persistProfileSettings = useCallback(
     (updates: Partial<typeof defaultProfileSettings>) => {
       if (!user) return
+      const storedSettings = getStoredProfileSettings(user.id)
       const nextSettings = {
-        income,
-        bonus,
-        investmentBase,
-        payday,
+        ...storedSettings,
         ...updates,
       }
       saveProfileSettings(user.id, nextSettings)
     },
-    [bonus, income, investmentBase, payday, user]
+    [user]
   )
 
   const setCurrency = (value: Currency) => {

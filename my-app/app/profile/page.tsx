@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import NavigationLayout from '@/components/NavigationLayout'
 import { useFinance } from '@/components/FinanceProvider'
@@ -83,6 +83,21 @@ export default function Page() {
 
   const profileName = name ?? user?.user_metadata?.full_name ?? ''
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraftIncome(income || '0')
+  }, [income])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraftInvestmentBase(investmentBase || '0')
+  }, [investmentBase])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraftPayday(payday || '1')
+  }, [payday])
+
   const showStatus = (message: string, variant: StatusVariant = 'info') => {
     setNotice({ message, variant })
   }
@@ -91,9 +106,16 @@ export default function Page() {
     event.preventDefault()
 
     // Aplica mudanças do plano mensal apenas ao clicar em Salvar.
-    setIncome(draftIncome)
-    setInvestmentBase(draftInvestmentBase)
-    setPayday(draftPayday)
+    const normalizedIncome = draftIncome.trim() || '0'
+    const normalizedInvestmentBase = draftInvestmentBase.trim() || '0'
+    const normalizedPayday = draftPayday.trim() || '1'
+
+    setDraftIncome(normalizedIncome)
+    setDraftInvestmentBase(normalizedInvestmentBase)
+    setDraftPayday(normalizedPayday)
+    setIncome(normalizedIncome)
+    setInvestmentBase(normalizedInvestmentBase)
+    setPayday(normalizedPayday)
 
 
     const cleanName = removeNumbers(profileName).trim()
