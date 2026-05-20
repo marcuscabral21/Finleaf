@@ -7,10 +7,10 @@ import { useFinance, CATEGORIES, getCategoryTranslationKey } from '@/components/
 import { useTranslation } from '@/components/useTranslation'
 
 const categories = [
-  { key: 'house', labelKey: 'dashboard.category.house', color: 'bg-emerald-500', categoryNames: ['Contas'], descriptionKey: 'dashboard.category.houseDesc' },
-  { key: 'shopping', labelKey: 'dashboard.category.shopping', color: 'bg-sky-500', categoryNames: ['Alimentacao', 'Outros'], descriptionKey: 'dashboard.category.shoppingDesc' },
-  { key: 'transport', labelKey: 'dashboard.category.transport', color: 'bg-violet-500', categoryNames: ['Transporte'], descriptionKey: 'dashboard.category.transportDesc' },
-  { key: 'leisure', labelKey: 'dashboard.category.leisure', color: 'bg-amber-500', categoryNames: ['Entretenimento'], descriptionKey: 'dashboard.category.leisureDesc' },
+  { key: 'house', labelKey: 'dashboard.category.house', color: 'bg-emerald-500', strokeColor: '#10b981', categoryNames: ['Contas'], descriptionKey: 'dashboard.category.houseDesc' },
+  { key: 'shopping', labelKey: 'dashboard.category.shopping', color: 'bg-sky-500', strokeColor: '#0ea5e9', categoryNames: ['Alimentacao', 'Outros'], descriptionKey: 'dashboard.category.shoppingDesc' },
+  { key: 'transport', labelKey: 'dashboard.category.transport', color: 'bg-violet-500', strokeColor: '#8b5cf6', categoryNames: ['Transporte'], descriptionKey: 'dashboard.category.transportDesc' },
+  { key: 'leisure', labelKey: 'dashboard.category.leisure', color: 'bg-amber-500', strokeColor: '#f59e0b', categoryNames: ['Entretenimento'], descriptionKey: 'dashboard.category.leisureDesc' },
 ]
 
 export default function Page() {
@@ -76,6 +76,21 @@ export default function Page() {
     [totalExpenses, transactions]
   )
   const selectedCategory = dashboardCategories.find((category) => category.key === activeCategory) ?? dashboardCategories[0]
+  const categoryChartSegments = useMemo(() => {
+    const chartTotal = dashboardCategories.reduce((sum, category) => sum + category.amount, 0)
+    let offset = 0
+
+    return dashboardCategories.map((category) => {
+      const chartPercent = chartTotal > 0 ? (category.amount / chartTotal) * 100 : 0
+      const segment = {
+        ...category,
+        chartPercent,
+        chartOffset: offset,
+      }
+      offset += chartPercent
+      return segment
+    })
+  }, [dashboardCategories])
 
   function openAddModal() {
     setEditingTransaction(null)
@@ -175,6 +190,39 @@ export default function Page() {
                   ))}
                 </div>
               </div>
+            </div>
+
+            <div className="mt-7 hidden items-end justify-center lg:flex">
+              <svg className="h-28 w-full max-w-md overflow-visible" viewBox="0 0 240 126" role="img" aria-label={t('dashboard.categories')}>
+                <path
+                  d="M 22 112 A 98 98 0 0 1 218 112"
+                  fill="none"
+                  pathLength="100"
+                  stroke="currentColor"
+                  strokeWidth="12"
+                  className="text-slate-200 dark:text-slate-800"
+                />
+                {categoryChartSegments.map((category) =>
+                  category.chartPercent > 0 ? (
+                    <path
+                      key={category.key}
+                      d="M 22 112 A 98 98 0 0 1 218 112"
+                      fill="none"
+                      pathLength="100"
+                      stroke={category.strokeColor}
+                      strokeDasharray={`${category.chartPercent} ${100 - category.chartPercent}`}
+                      strokeDashoffset={-category.chartOffset}
+                      strokeLinecap="butt"
+                      strokeWidth={activeCategory === category.key ? 16 : 12}
+                      className="cursor-pointer transition-all"
+                      opacity={activeCategory === category.key ? 1 : 0.72}
+                      onMouseEnter={() => setActiveCategory(category.key)}
+                      onFocus={() => setActiveCategory(category.key)}
+                      onClick={() => setActiveCategory(category.key)}
+                    />
+                  ) : null
+                )}
+              </svg>
             </div>
 
             <div className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 lg:grid-cols-4">
