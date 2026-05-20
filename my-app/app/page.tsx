@@ -50,14 +50,27 @@ export default function Page() {
   const dashboardCategories = useMemo(
     () =>
       categories.map((category) => {
-        const amount = transactions
-          .filter((transaction) => transaction.type === 'expense' && category.categoryNames.includes(transaction.category))
-          .reduce((sum, transaction) => sum + transaction.amount, 0)
+        const breakdown = category.categoryNames.map((categoryName) => {
+          const amount = transactions
+            .filter((transaction) => transaction.type === 'expense' && transaction.category === categoryName)
+            .reduce((sum, transaction) => sum + transaction.amount, 0)
+
+          return {
+            name: categoryName,
+            amount,
+            percent: 0,
+          }
+        })
+        const amount = breakdown.reduce((sum, item) => sum + item.amount, 0)
 
         return {
           ...category,
           amount,
           percent: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100) : 0,
+          breakdown: breakdown.map((item) => ({
+            ...item,
+            percent: amount > 0 ? Math.round((item.amount / amount) * 100) : 0,
+          })),
         }
       }),
     [totalExpenses, transactions]
@@ -146,10 +159,21 @@ export default function Page() {
                 <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.categories')}</p>
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t('dashboard.categoriesDesc')}</p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+              <div className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 lg:max-w-xs">
                 <p className="font-semibold">{t(selectedCategory.labelKey)}</p>
                 <p className="mt-1 text-2xl font-semibold sm:text-3xl">{formatAmount(selectedCategory.amount)}</p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t(selectedCategory.descriptionKey)}</p>
+                <div className="mt-4 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+                  {selectedCategory.breakdown.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between gap-3 text-xs sm:text-sm">
+                      <span className="min-w-0 truncate text-slate-500 dark:text-slate-400">{t(getCategoryTranslationKey(item.name))}</span>
+                      <span className="shrink-0 font-semibold text-slate-900 dark:text-slate-100">
+                        {formatAmount(item.amount)}
+                        <span className="ml-1 font-normal text-slate-500 dark:text-slate-400">({item.percent}%)</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
