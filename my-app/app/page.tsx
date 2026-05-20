@@ -183,7 +183,7 @@ export default function Page() {
 
         <div className="grid gap-6 lg:grid-cols-[1.55fr_0.95fr]">
           <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-6 lg:min-h-[184px] lg:flex-row lg:items-start lg:justify-between">
               <div className="hidden flex-1 items-end lg:flex">
                 <svg className="h-28 w-full max-w-sm overflow-visible" viewBox="0 0 240 126" role="img" aria-label={t('dashboard.categories')}>
                   <path
@@ -205,7 +205,7 @@ export default function Page() {
                         strokeDasharray={`${category.chartPercent} ${100 - category.chartPercent}`}
                         strokeDashoffset={-category.chartOffset}
                         strokeLinecap="butt"
-                        strokeWidth={activeCategory === category.key ? 16 : 12}
+                        strokeWidth="12"
                         className="cursor-pointer transition-all"
                         opacity={activeCategory === category.key ? 1 : 0.72}
                         onMouseEnter={() => setActiveCategory(category.key)}
@@ -224,7 +224,7 @@ export default function Page() {
                         strokeDasharray={`${availableChartSegment.chartPercent} ${100 - availableChartSegment.chartPercent}`}
                         strokeDashoffset={-availableChartSegment.chartOffset}
                         strokeLinecap="butt"
-                        strokeWidth={isShowingAvailableDetail ? 16 : 12}
+                        strokeWidth="12"
                         className="text-slate-950 transition-all dark:text-white"
                       />
                       <path
@@ -246,7 +246,7 @@ export default function Page() {
                   ) : null}
                 </svg>
               </div>
-              <div className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 lg:min-h-[158px] lg:max-w-xs">
+              <div className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 lg:min-h-[184px] lg:max-w-xs">
                 {isShowingAvailableDetail ? (
                   <>
                     <p className="font-semibold">{t('dashboard.available')}</p>
