@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import NavigationLayout from '@/components/NavigationLayout'
 import { useFinance, CATEGORIES, getCategoryTranslationKey } from '@/components/FinanceProvider'
 import { useTranslation } from '@/components/useTranslation'
@@ -200,9 +201,9 @@ export default function Page() {
               <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.recentHistory')}</p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('dashboard.recentHistoryDesc')}</p>
             </div>
-            <button type="button" className="w-full rounded-full bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto sm:py-2">
+            <Link href="/history" className="w-full rounded-full bg-slate-100 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto sm:py-2">
               {t('dashboard.allExpenses')}
-            </button>
+            </Link>
           </div>
 
           <div className="space-y-4">
