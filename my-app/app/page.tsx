@@ -15,6 +15,7 @@ const categories = [
 
 export default function Page() {
   const [activeCategory, setActiveCategory] = useState(categories[0].key)
+  const [isAvailableChartHovered, setIsAvailableChartHovered] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -76,6 +77,7 @@ export default function Page() {
     [totalExpenses, transactions]
   )
   const selectedCategory = dashboardCategories.find((category) => category.key === activeCategory) ?? dashboardCategories[0]
+  const isShowingAvailableDetail = isAvailableChartHovered && availableBalance > 0
   const availableChartAmount = Math.max(availableBalance, 0)
   const categoryChartSegments = useMemo(() => {
     const chartTotal = dashboardCategories.reduce((sum, category) => sum + category.amount, 0) + availableChartAmount
@@ -222,26 +224,39 @@ export default function Page() {
                       strokeDashoffset={-availableChartSegment.chartOffset}
                       strokeLinecap="butt"
                       strokeWidth="12"
-                      className="text-slate-950 dark:text-white"
+                      className="cursor-pointer text-slate-950 transition-all dark:text-white"
+                      onMouseEnter={() => setIsAvailableChartHovered(true)}
+                      onMouseLeave={() => setIsAvailableChartHovered(false)}
+                      onFocus={() => setIsAvailableChartHovered(true)}
+                      onBlur={() => setIsAvailableChartHovered(false)}
                     />
                   ) : null}
                 </svg>
               </div>
               <div className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 lg:max-w-xs">
-                <p className="font-semibold">{t(selectedCategory.labelKey)}</p>
-                <p className="mt-1 text-2xl font-semibold sm:text-3xl">{formatAmount(selectedCategory.amount)}</p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t(selectedCategory.descriptionKey)}</p>
-                <div className="mt-4 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-                  {selectedCategory.breakdown.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between gap-3 text-xs sm:text-sm">
-                      <span className="min-w-0 truncate text-slate-500 dark:text-slate-400">{t(getCategoryTranslationKey(item.name))}</span>
-                      <span className="shrink-0 font-semibold text-slate-900 dark:text-slate-100">
-                        {formatAmount(item.amount)}
-                        <span className="ml-1 font-normal text-slate-500 dark:text-slate-400">({item.percent}%)</span>
-                      </span>
+                {isShowingAvailableDetail ? (
+                  <>
+                    <p className="font-semibold">{t('dashboard.available')}</p>
+                    <p className="mt-1 text-2xl font-semibold sm:text-3xl">{formatAmount(availableBalance)}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold">{t(selectedCategory.labelKey)}</p>
+                    <p className="mt-1 text-2xl font-semibold sm:text-3xl">{formatAmount(selectedCategory.amount)}</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t(selectedCategory.descriptionKey)}</p>
+                    <div className="mt-4 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+                      {selectedCategory.breakdown.map((item) => (
+                        <div key={item.name} className="flex items-center justify-between gap-3 text-xs sm:text-sm">
+                          <span className="min-w-0 truncate text-slate-500 dark:text-slate-400">{t(getCategoryTranslationKey(item.name))}</span>
+                          <span className="shrink-0 font-semibold text-slate-900 dark:text-slate-100">
+                            {formatAmount(item.amount)}
+                            <span className="ml-1 font-normal text-slate-500 dark:text-slate-400">({item.percent}%)</span>
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </>
+                )}
               </div>
             </div>
 
