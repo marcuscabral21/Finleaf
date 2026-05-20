@@ -76,21 +76,33 @@ export default function Page() {
     [totalExpenses, transactions]
   )
   const selectedCategory = dashboardCategories.find((category) => category.key === activeCategory) ?? dashboardCategories[0]
+  const availableChartAmount = Math.max(availableBalance, 0)
   const categoryChartSegments = useMemo(() => {
-    const chartTotal = dashboardCategories.reduce((sum, category) => sum + category.amount, 0)
-    let offset = 0
+    const chartTotal = dashboardCategories.reduce((sum, category) => sum + category.amount, 0) + availableChartAmount
 
-    return dashboardCategories.map((category) => {
+    return dashboardCategories.map((category, index) => {
       const chartPercent = chartTotal > 0 ? (category.amount / chartTotal) * 100 : 0
-      const segment = {
+      const chartOffset = dashboardCategories
+        .slice(0, index)
+        .reduce((sum, previousCategory) => sum + (chartTotal > 0 ? (previousCategory.amount / chartTotal) * 100 : 0), 0)
+
+      return {
         ...category,
         chartPercent,
-        chartOffset: offset,
+        chartOffset,
       }
-      offset += chartPercent
-      return segment
     })
-  }, [dashboardCategories])
+  }, [availableChartAmount, dashboardCategories])
+  const availableChartSegment = useMemo(() => {
+    const chartTotal = dashboardCategories.reduce((sum, category) => sum + category.amount, 0) + availableChartAmount
+    const chartPercent = chartTotal > 0 ? (availableChartAmount / chartTotal) * 100 : 0
+    const chartOffset = categoryChartSegments.reduce((sum, category) => sum + category.chartPercent, 0)
+
+    return {
+      chartPercent,
+      chartOffset,
+    }
+  }, [availableChartAmount, categoryChartSegments, dashboardCategories])
 
   function openAddModal() {
     setEditingTransaction(null)
@@ -170,9 +182,50 @@ export default function Page() {
         <div className="grid gap-6 lg:grid-cols-[1.55fr_0.95fr]">
           <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.categories')}</p>
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t('dashboard.categoriesDesc')}</p>
+              <div className="hidden flex-1 items-end lg:flex">
+                <svg className="h-28 w-full max-w-sm overflow-visible" viewBox="0 0 240 126" role="img" aria-label={t('dashboard.categories')}>
+                  <path
+                    d="M 22 112 A 98 98 0 0 1 218 112"
+                    fill="none"
+                    pathLength="100"
+                    stroke="currentColor"
+                    strokeWidth="12"
+                    className="text-slate-200 dark:text-slate-800"
+                  />
+                  {categoryChartSegments.map((category) =>
+                    category.chartPercent > 0 ? (
+                      <path
+                        key={category.key}
+                        d="M 22 112 A 98 98 0 0 1 218 112"
+                        fill="none"
+                        pathLength="100"
+                        stroke={category.strokeColor}
+                        strokeDasharray={`${category.chartPercent} ${100 - category.chartPercent}`}
+                        strokeDashoffset={-category.chartOffset}
+                        strokeLinecap="butt"
+                        strokeWidth={activeCategory === category.key ? 16 : 12}
+                        className="cursor-pointer transition-all"
+                        opacity={activeCategory === category.key ? 1 : 0.72}
+                        onMouseEnter={() => setActiveCategory(category.key)}
+                        onFocus={() => setActiveCategory(category.key)}
+                        onClick={() => setActiveCategory(category.key)}
+                      />
+                    ) : null
+                  )}
+                  {availableChartSegment.chartPercent > 0 ? (
+                    <path
+                      d="M 22 112 A 98 98 0 0 1 218 112"
+                      fill="none"
+                      pathLength="100"
+                      stroke="currentColor"
+                      strokeDasharray={`${availableChartSegment.chartPercent} ${100 - availableChartSegment.chartPercent}`}
+                      strokeDashoffset={-availableChartSegment.chartOffset}
+                      strokeLinecap="butt"
+                      strokeWidth="12"
+                      className="text-slate-950 dark:text-white"
+                    />
+                  ) : null}
+                </svg>
               </div>
               <div className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 lg:max-w-xs">
                 <p className="font-semibold">{t(selectedCategory.labelKey)}</p>
@@ -190,39 +243,6 @@ export default function Page() {
                   ))}
                 </div>
               </div>
-            </div>
-
-            <div className="mt-7 hidden items-end justify-center lg:flex">
-              <svg className="h-28 w-full max-w-md overflow-visible" viewBox="0 0 240 126" role="img" aria-label={t('dashboard.categories')}>
-                <path
-                  d="M 22 112 A 98 98 0 0 1 218 112"
-                  fill="none"
-                  pathLength="100"
-                  stroke="currentColor"
-                  strokeWidth="12"
-                  className="text-slate-200 dark:text-slate-800"
-                />
-                {categoryChartSegments.map((category) =>
-                  category.chartPercent > 0 ? (
-                    <path
-                      key={category.key}
-                      d="M 22 112 A 98 98 0 0 1 218 112"
-                      fill="none"
-                      pathLength="100"
-                      stroke={category.strokeColor}
-                      strokeDasharray={`${category.chartPercent} ${100 - category.chartPercent}`}
-                      strokeDashoffset={-category.chartOffset}
-                      strokeLinecap="butt"
-                      strokeWidth={activeCategory === category.key ? 16 : 12}
-                      className="cursor-pointer transition-all"
-                      opacity={activeCategory === category.key ? 1 : 0.72}
-                      onMouseEnter={() => setActiveCategory(category.key)}
-                      onFocus={() => setActiveCategory(category.key)}
-                      onClick={() => setActiveCategory(category.key)}
-                    />
-                  ) : null
-                )}
-              </svg>
             </div>
 
             <div className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 lg:grid-cols-4">
