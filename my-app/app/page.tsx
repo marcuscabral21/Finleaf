@@ -215,29 +215,45 @@ export default function Page() {
                     ) : null
                   )}
                   {availableChartSegment.chartPercent > 0 ? (
-                    <path
-                      d="M 22 112 A 98 98 0 0 1 218 112"
-                      fill="none"
-                      pathLength="100"
-                      stroke="currentColor"
-                      strokeDasharray={`${availableChartSegment.chartPercent} ${100 - availableChartSegment.chartPercent}`}
-                      strokeDashoffset={-availableChartSegment.chartOffset}
-                      strokeLinecap="butt"
-                      strokeWidth="12"
-                      className="cursor-pointer text-slate-950 transition-all dark:text-white"
-                      onMouseEnter={() => setIsAvailableChartHovered(true)}
-                      onMouseLeave={() => setIsAvailableChartHovered(false)}
-                      onFocus={() => setIsAvailableChartHovered(true)}
-                      onBlur={() => setIsAvailableChartHovered(false)}
-                    />
+                    <>
+                      <path
+                        d="M 22 112 A 98 98 0 0 1 218 112"
+                        fill="none"
+                        pathLength="100"
+                        stroke="currentColor"
+                        strokeDasharray={`${availableChartSegment.chartPercent} ${100 - availableChartSegment.chartPercent}`}
+                        strokeDashoffset={-availableChartSegment.chartOffset}
+                        strokeLinecap="butt"
+                        strokeWidth={isShowingAvailableDetail ? 16 : 12}
+                        className="text-slate-950 transition-all dark:text-white"
+                      />
+                      <path
+                        d="M 22 112 A 98 98 0 0 1 218 112"
+                        fill="none"
+                        pathLength="100"
+                        stroke="transparent"
+                        strokeDasharray={`${availableChartSegment.chartPercent} ${100 - availableChartSegment.chartPercent}`}
+                        strokeDashoffset={-availableChartSegment.chartOffset}
+                        strokeLinecap="butt"
+                        strokeWidth="28"
+                        className="cursor-pointer"
+                        onMouseEnter={() => setIsAvailableChartHovered(true)}
+                        onMouseLeave={() => setIsAvailableChartHovered(false)}
+                        onFocus={() => setIsAvailableChartHovered(true)}
+                        onBlur={() => setIsAvailableChartHovered(false)}
+                      />
+                    </>
                   ) : null}
                 </svg>
               </div>
-              <div className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 lg:max-w-xs">
+              <div className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 lg:min-h-[158px] lg:max-w-xs">
                 {isShowingAvailableDetail ? (
                   <>
                     <p className="font-semibold">{t('dashboard.available')}</p>
                     <p className="mt-1 text-2xl font-semibold sm:text-3xl">{formatAmount(availableBalance)}</p>
+                    <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-800">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.available')}</p>
+                    </div>
                   </>
                 ) : (
                   <>
