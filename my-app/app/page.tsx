@@ -13,6 +13,34 @@ const categories = [
   { key: 'leisure', labelKey: 'dashboard.category.leisure', color: 'bg-amber-500', strokeColor: '#f59e0b', categoryNames: ['Entretenimento'], descriptionKey: 'dashboard.category.leisureDesc' },
 ]
 
+function getPayCycleBounds(payday: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const requestedDay = Math.min(Math.max(Number(payday) || 1, 1), 31)
+  const currentMonthPayday = getPaydayDate(today.getFullYear(), today.getMonth(), requestedDay)
+  const cycleStart = today >= currentMonthPayday ? currentMonthPayday : getPaydayDate(today.getFullYear(), today.getMonth() - 1, requestedDay)
+  const nextCycleStart = getPaydayDate(cycleStart.getFullYear(), cycleStart.getMonth() + 1, requestedDay)
+
+  return {
+    cycleStart: formatLocalDate(cycleStart),
+    nextCycleStart: formatLocalDate(nextCycleStart),
+  }
+}
+
+function getPaydayDate(year: number, month: number, requestedDay: number) {
+  const lastDayOfMonth = new Date(year, month + 1, 0).getDate()
+  return new Date(year, month, Math.min(requestedDay, lastDayOfMonth))
+}
+
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 export default function Page() {
   const [activeCategory, setActiveCategory] = useState(categories[0].key)
   const [isAvailableChartHovered, setIsAvailableChartHovered] = useState(false)
@@ -25,18 +53,26 @@ export default function Page() {
     type: 'expense' as 'income' | 'expense',
     notes: '',
   })
-  const { transactions, goals, formatAmount, addTransaction, updateTransaction, deleteTransaction } = useFinance()
+  const { transactions, goals, payday, formatAmount, addTransaction, updateTransaction, deleteTransaction } = useFinance()
   const { t, translateNote } = useTranslation()
   const transactionCategories = CATEGORIES
+  const payCycleBounds = useMemo(() => getPayCycleBounds(payday), [payday])
+  const cycleTransactions = useMemo(
+    () =>
+      transactions.filter(
+        (transaction) => transaction.date >= payCycleBounds.cycleStart && transaction.date < payCycleBounds.nextCycleStart
+      ),
+    [payCycleBounds, transactions]
+  )
 
   const totalIncome = useMemo(
-    () => transactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
-    [transactions]
+    () => cycleTransactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
+    [cycleTransactions]
   )
 
   const totalExpenses = useMemo(
-    () => transactions.filter((item) => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0),
-    [transactions]
+    () => cycleTransactions.filter((item) => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0),
+    [cycleTransactions]
   )
 
   const availableBalance = totalIncome - totalExpenses
@@ -44,15 +80,16 @@ export default function Page() {
   const investments = useMemo(
     () =>
       transactions
+        .filter((item) => item.date >= payCycleBounds.cycleStart && item.date < payCycleBounds.nextCycleStart)
         .filter((item) => item.category === 'Investimentos')
         .reduce((sum, item) => sum + (item.type === 'expense' ? item.amount : -item.amount), 0),
-    [transactions]
+    [payCycleBounds, transactions]
   )
   const dashboardCategories = useMemo(
     () =>
       categories.map((category) => {
         const breakdown = category.categoryNames.map((categoryName) => {
-          const amount = transactions
+          const amount = cycleTransactions
             .filter((transaction) => transaction.type === 'expense' && transaction.category === categoryName)
             .reduce((sum, transaction) => sum + transaction.amount, 0)
 
@@ -74,7 +111,7 @@ export default function Page() {
           })),
         }
       }),
-    [totalExpenses, transactions]
+    [cycleTransactions, totalExpenses]
   )
   const selectedCategory = dashboardCategories.find((category) => category.key === activeCategory) ?? dashboardCategories[0]
   const isShowingAvailableDetail = isAvailableChartHovered && availableBalance > 0
