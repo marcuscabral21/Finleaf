@@ -294,6 +294,19 @@ export default function Page() {
                   <p className="mt-4 text-sm font-semibold text-slate-900 dark:text-slate-100">{t(category.labelKey)}</p>
                   <p className="mt-2 text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">{formatAmount(category.amount)}</p>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{category.percent}% {t('dashboard.ofTotal')}</p>
+                  {activeCategory === category.key ? (
+                    <div className="mt-4 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-800 lg:hidden">
+                      {category.breakdown.map((item) => (
+                        <div key={item.name} className="flex items-center justify-between gap-3 text-xs">
+                          <span className="min-w-0 truncate text-slate-500 dark:text-slate-400">{t(getCategoryTranslationKey(item.name))}</span>
+                          <span className="shrink-0 font-semibold text-slate-900 dark:text-slate-100">
+                            {formatAmount(item.amount)}
+                            <span className="ml-1 font-normal text-slate-500 dark:text-slate-400">({item.percent}%)</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </button>
               ))}
             </div>
