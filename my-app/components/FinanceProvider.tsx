@@ -346,12 +346,12 @@ function mapGoal(row: DbGoal): Goal {
 }
 
 function compareTransactionsNewestFirst(first: Transaction, second: Transaction) {
-  const dateCompare = second.date.localeCompare(first.date)
-  if (dateCompare !== 0) {
-    return dateCompare
+  const createdAtCompare = (second.createdAt ?? '').localeCompare(first.createdAt ?? '')
+  if (createdAtCompare !== 0) {
+    return createdAtCompare
   }
 
-  return (second.createdAt ?? '').localeCompare(first.createdAt ?? '')
+  return second.date.localeCompare(first.date)
 }
 
 function sortTransactionsNewestFirst(transactions: Transaction[]) {
@@ -741,8 +741,13 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           return
         }
 
+        const savedTransaction = mapTransaction(data as unknown as DbTransaction)
         setTransactions((current) =>
-          sortTransactionsNewestFirst(current.map((item) => (item.id === tempId ? mapTransaction(data as unknown as DbTransaction) : item)))
+          sortTransactionsNewestFirst(
+            current.map((item) =>
+              item.id === tempId ? { ...savedTransaction, createdAt: savedTransaction.createdAt ?? item.createdAt } : item
+            )
+          )
         )
       })
   }
