@@ -114,6 +114,7 @@ export default function Page() {
     [cycleTransactions, totalExpenses]
   )
   const selectedCategory = dashboardCategories.find((category) => category.key === activeCategory) ?? dashboardCategories[0]
+  const recentTransactions = transactions.slice(0, 6)
   const isShowingAvailableDetail = isAvailableChartHovered && availableBalance > 0
   const availableChartAmount = Math.max(availableBalance, 0)
   const categoryChartSegments = useMemo(() => {
@@ -379,24 +380,36 @@ export default function Page() {
             </Link>
           </div>
 
-          <div className="space-y-4">
-            {transactions.map((item) => (
-              <div key={item.id} className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-200 text-xl dark:bg-slate-800">{item.icon || '•'}</div>
-                  <div>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">{t(getCategoryTranslationKey(item.category))}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{item.date}</p>
-                    {item.notes ? <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{translateNote(item.notes)}</p> : null}
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+            {recentTransactions.map((item, index) => (
+              <div
+                key={item.id}
+                className={`flex-col gap-4 border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:p-5 ${
+                  index >= 4 ? 'hidden sm:flex' : 'flex'
+                } ${index < recentTransactions.length - 1 ? 'border-b' : ''}`}
+              >
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl shadow-sm dark:bg-slate-950">{item.icon || '•'}</div>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-900 dark:text-slate-100">{t(getCategoryTranslationKey(item.category))}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+                      <span>{item.date}</span>
+                      <span className={item.type === 'expense' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}>
+                        {t(item.type === 'expense' ? 'history.csvExpense' : 'history.csvIncome')}
+                      </span>
+                    </div>
+                    {item.notes ? <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{translateNote(item.notes)}</p> : null}
                   </div>
                 </div>
-                <div className="flex flex-col gap-3 sm:w-72 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{item.type === 'expense' ? '-' : '+'} {formatAmount(item.amount)}</p>
-                  <div className="grid grid-cols-2 gap-2 sm:flex">
+                <div className="flex items-center justify-between gap-3 sm:w-72">
+                  <p className={`shrink-0 text-lg font-semibold ${item.type === 'expense' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                    {item.type === 'expense' ? '-' : '+'} {formatAmount(item.amount)}
+                  </p>
+                  <div className="grid shrink-0 grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => openEditModal(item.id)}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                      className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
                       {t('history.edit')}
                     </button>
