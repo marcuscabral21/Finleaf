@@ -66,8 +66,8 @@ export default function Page() {
   )
 
   const totalIncome = useMemo(
-    () => cycleTransactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
-    [cycleTransactions]
+    () => transactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
+    [transactions]
   )
 
   const totalExpenses = useMemo(
@@ -75,8 +75,22 @@ export default function Page() {
     [cycleTransactions]
   )
 
-  const availableBalance = totalIncome - totalExpenses
-  const savings = useMemo(() => goals.reduce((sum, goal) => sum + goal.current, 0), [goals])
+  const availableBalance = useMemo(
+    () =>
+      transactions.reduce(
+        (sum, item) => sum + (item.type === 'income' ? item.amount : -item.amount),
+        0
+      ),
+    [transactions]
+  )
+  const today = useMemo(() => formatLocalDate(new Date()), [])
+  const savings = useMemo(
+    () =>
+      goals
+        .filter((goal) => !goal.deadline || goal.deadline >= today)
+        .reduce((sum, goal) => sum + goal.current, 0),
+    [goals, today]
+  )
   const investments = useMemo(
     () =>
       transactions
