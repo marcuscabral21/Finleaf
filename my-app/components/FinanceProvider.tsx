@@ -354,6 +354,10 @@ function compareTransactionsNewestFirst(first: Transaction, second: Transaction)
   return (second.createdAt ?? '').localeCompare(first.createdAt ?? '')
 }
 
+function sortTransactionsNewestFirst(transactions: Transaction[]) {
+  return [...transactions].sort(compareTransactionsNewestFirst)
+}
+
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -716,7 +720,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       icon: normalizeCategoryIcon(transaction.category, category?.icon_light),
       createdAt: new Date().toISOString(),
     }
-    setTransactions((current) => [optimisticTransaction, ...current])
+    setTransactions((current) => sortTransactionsNewestFirst([optimisticTransaction, ...current]))
 
     void supabase
       .from('transactions')
@@ -737,7 +741,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           return
         }
 
-        setTransactions((current) => current.map((item) => (item.id === tempId ? mapTransaction(data as unknown as DbTransaction) : item)))
+        setTransactions((current) =>
+          sortTransactionsNewestFirst(current.map((item) => (item.id === tempId ? mapTransaction(data as unknown as DbTransaction) : item)))
+        )
       })
   }
 
@@ -975,7 +981,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   }, [currency])
 
   const sortedTransactions = useMemo(
-    () => [...transactions].sort(compareTransactionsNewestFirst),
+    () => sortTransactionsNewestFirst(transactions),
     [transactions]
   )
 
