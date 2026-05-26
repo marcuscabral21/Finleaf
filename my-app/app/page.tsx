@@ -8,7 +8,7 @@ import { useTranslation } from '@/components/useTranslation'
 
 const categories = [
   { key: 'house', labelKey: 'dashboard.category.house', color: 'bg-emerald-500', strokeColor: '#10b981', categoryNames: ['Contas'], descriptionKey: 'dashboard.category.houseDesc' },
-  { key: 'shopping', labelKey: 'dashboard.category.shopping', color: 'bg-sky-500', strokeColor: '#0ea5e9', categoryNames: ['Alimentacao', 'Outros'], descriptionKey: 'dashboard.category.shoppingDesc' },
+  { key: 'shopping', labelKey: 'dashboard.category.shopping', color: 'bg-sky-500', strokeColor: '#0ea5e9', categoryNames: ['Alimentacao', 'Saude', 'Educacao', 'Outros'], descriptionKey: 'dashboard.category.shoppingDesc' },
   { key: 'transport', labelKey: 'dashboard.category.transport', color: 'bg-violet-500', strokeColor: '#8b5cf6', categoryNames: ['Transporte'], descriptionKey: 'dashboard.category.transportDesc' },
   { key: 'leisure', labelKey: 'dashboard.category.leisure', color: 'bg-amber-500', strokeColor: '#f59e0b', categoryNames: ['Entretenimento'], descriptionKey: 'dashboard.category.leisureDesc' },
 ]
