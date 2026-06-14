@@ -452,8 +452,8 @@ export default function Page() {
         </div>
 
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center">
-            <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-800 dark:bg-slate-950 sm:p-6">
+          <div className="finleaf-modal-backdrop fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 backdrop-blur-sm sm:items-center">
+            <div className="finleaf-modal max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-800 dark:bg-slate-950 sm:p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 {editingTransaction ? t('modal.edit') : t('modal.add')}
               </h3>

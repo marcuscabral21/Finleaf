@@ -173,16 +173,16 @@ export default function HomeClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_26%)] px-3 py-4 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-8">
-      <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-5 sm:gap-8">
+    <main className="finleaf-shell min-h-screen px-3 py-4 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-8">
+      <div className="finleaf-content mx-auto flex w-full max-w-[1120px] flex-col gap-5 sm:gap-8">
         <header className="flex flex-col gap-3">
           <FinleafLogo />
         </header>
 
-        <div className="relative overflow-hidden rounded-[26px] border border-slate-200 bg-white/85 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px]">
+        <div className="finleaf-panel relative max-w-full overflow-hidden rounded-[26px] border border-slate-200 bg-white/85 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px]">
           <div className={`flex w-[200%] transition-transform duration-700 ease-in-out ${isSignUp ? 'translate-x-0' : '-translate-x-1/2'}`}>
-            <div className="basis-1/2 shrink-0 flex">
-              <section className="flex w-full flex-col justify-center gap-6 px-4 py-8 sm:px-8 sm:py-10 md:w-2/3 md:px-14 md:py-14">
+            <div className="flex min-w-0 basis-1/2 shrink-0">
+              <section className="flex min-w-0 w-full flex-col justify-center gap-6 px-4 py-8 sm:px-8 sm:py-10 md:w-2/3 md:px-14 md:py-14">
                 <div>
                   <p className="text-lg font-semibold">{t('auth.createAccount')}</p>
                   <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{t('auth.createAccountDesc')}</p>
@@ -268,8 +268,8 @@ export default function HomeClient() {
               </section>
             </div>
 
-            <div className="basis-1/2 shrink-0 flex">
-              <section className="flex w-full flex-col justify-center gap-6 px-4 py-8 sm:px-8 sm:py-10 md:w-2/3 md:px-14 md:py-14">
+            <div className="flex min-w-0 basis-1/2 shrink-0">
+              <section className="flex min-w-0 w-full flex-col justify-center gap-6 px-4 py-8 sm:px-8 sm:py-10 md:w-2/3 md:px-14 md:py-14">
                 <div>
                   <p className="text-lg font-semibold">{t('auth.signIn')}</p>
                   <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{t('auth.signInDesc')}</p>

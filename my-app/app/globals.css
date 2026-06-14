@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  color-scheme: light;
+  --background: #f7faf8;
   --foreground: #171717;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-strong: rgba(255, 255, 255, 0.96);
+  --line: rgba(15, 23, 42, 0.1);
+  --line-strong: rgba(15, 23, 42, 0.16);
+  --shadow-soft: 0 18px 55px rgba(15, 23, 42, 0.08);
+  --shadow-lift: 0 24px 70px rgba(15, 23, 42, 0.13);
+  --focus-ring: 0 0 0 4px rgba(16, 185, 129, 0.16);
 }
 
 @theme inline {
@@ -14,20 +22,50 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    color-scheme: dark;
+    --background: #07110f;
     --foreground: #ededed;
+    --surface: rgba(2, 6, 23, 0.82);
+    --surface-strong: rgba(2, 6, 23, 0.94);
+    --line: rgba(148, 163, 184, 0.14);
+    --line-strong: rgba(148, 163, 184, 0.24);
+    --shadow-soft: 0 18px 60px rgba(0, 0, 0, 0.34);
+    --shadow-lift: 0 24px 80px rgba(0, 0, 0, 0.44);
+    --focus-ring: 0 0 0 4px rgba(52, 211, 153, 0.18);
   }
 }
 
+html {
+  background:
+    radial-gradient(circle at 8% -8%, rgba(16, 185, 129, 0.16), transparent 28rem),
+    radial-gradient(circle at 92% 0%, rgba(14, 165, 233, 0.12), transparent 26rem),
+    var(--background);
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.58), transparent 34rem),
+    var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 * {
   min-width: 0;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 button,
@@ -77,9 +115,246 @@ input[type="month"]::-webkit-calendar-picker-indicator,
 }
 
 @media (max-width: 640px) {
+input,
+select,
+textarea {
+  font-size: 16px;
+  }
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.24);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition-duration: 220ms;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+button,
+a {
+  transform-origin: center;
+}
+
+button:not(:disabled):active,
+a:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+input,
+select,
+textarea {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: var(--focus-ring), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.finleaf-shell {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.14), transparent 27rem),
+    radial-gradient(circle at 100% 8%, rgba(14, 165, 233, 0.1), transparent 29rem),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(241, 245, 249, 0.96));
+}
+
+.dark .finleaf-shell {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.13), transparent 28rem),
+    radial-gradient(circle at 100% 8%, rgba(56, 189, 248, 0.09), transparent 30rem),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.98), rgba(2, 13, 18, 0.98));
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background:
+      linear-gradient(135deg, rgba(15, 23, 42, 0.52), transparent 34rem),
+      var(--background);
+  }
+
+  .finleaf-shell {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.13), transparent 28rem),
+      radial-gradient(circle at 100% 8%, rgba(56, 189, 248, 0.09), transparent 30rem),
+      linear-gradient(180deg, rgba(2, 6, 23, 0.98), rgba(2, 13, 18, 0.98));
+  }
+}
+
+.finleaf-panel,
+[class*="rounded-[26px]"][class*="bg-white/90"],
+[class*="rounded-[32px]"][class*="bg-white/90"],
+[class*="rounded-[32px]"][class*="bg-slate-950/90"],
+[class*="rounded-[32px]"][class*="bg-slate-950/95"] {
+  position: relative;
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.finleaf-panel::before,
+[class*="rounded-[26px]"][class*="bg-white/90"]::before,
+[class*="rounded-[32px]"][class*="bg-white/90"]::before {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.64), transparent 34%);
+  opacity: 0.72;
+}
+
+@media (prefers-color-scheme: dark) {
+  .finleaf-panel::before,
+  [class*="rounded-[26px]"][class*="bg-white/90"]::before,
+  [class*="rounded-[32px]"][class*="bg-white/90"]::before {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 38%);
+    opacity: 0.9;
+  }
+
   input,
   select,
   textarea {
-    font-size: 16px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    box-shadow: var(--focus-ring), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+}
+
+.finleaf-panel > *,
+[class*="rounded-[26px]"][class*="bg-white/90"] > *,
+[class*="rounded-[32px]"][class*="bg-white/90"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+.finleaf-content {
+  width: 100%;
+  max-width: 100%;
+  animation: finleaf-fade-up 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.finleaf-content > * {
+  animation: finleaf-fade-up 560ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.finleaf-content > *:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.finleaf-content > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.finleaf-lift,
+[class*="rounded-3xl"][class*="border"][class*="bg-slate-50"],
+[class*="rounded-3xl"][class*="border"][class*="bg-white"] {
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 220ms ease,
+    background-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+@media (hover: hover) {
+  .finleaf-lift:hover,
+  button[class*="rounded-3xl"]:hover,
+  a[class*="rounded-3xl"]:hover,
+  [class*="rounded-3xl"][class*="border"][class*="bg-slate-50"]:hover {
+    transform: translateY(-2px);
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-lift);
+  }
+
+  button[class*="bg-emerald-500"]:hover,
+  a[class*="bg-emerald-500"]:hover {
+    box-shadow: 0 18px 44px rgba(16, 185, 129, 0.26);
+  }
+}
+
+.finleaf-modal-backdrop {
+  animation: finleaf-fade 180ms ease-out both;
+}
+
+.finleaf-modal {
+  animation: finleaf-scale-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.finleaf-progress {
+  position: relative;
+  overflow: hidden;
+}
+
+.finleaf-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  transform: translateX(-100%);
+  animation: finleaf-sheen 2.8s ease-in-out infinite;
+}
+
+@keyframes finleaf-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes finleaf-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes finleaf-scale-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes finleaf-sheen {
+  0%,
+  55% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
   }
 }

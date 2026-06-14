@@ -27,9 +27,9 @@ export default function NavigationLayout({ title, subtitle, children }: Navigati
   const displayInitial = displayName.charAt(0).toUpperCase()
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto flex min-h-screen max-w-[1480px] gap-6 px-3 pb-28 pt-3 sm:px-4 sm:pt-6 lg:px-8 lg:pb-6">
-        <aside className="hidden w-72 shrink-0 rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 lg:block">
+    <div className="finleaf-shell min-h-screen text-slate-900 dark:text-slate-100">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1480px] overflow-x-hidden gap-6 px-3 pb-28 pt-3 sm:px-4 sm:pt-6 lg:px-8 lg:pb-6">
+        <aside className="finleaf-panel hidden w-72 shrink-0 rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-lg shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 lg:block">
           <div className="mb-10 flex flex-col gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">Finleaf</p>
@@ -64,8 +64,8 @@ export default function NavigationLayout({ title, subtitle, children }: Navigati
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1">
-          <header className="mb-5 flex flex-col gap-5 rounded-[26px] border border-slate-200 bg-white/90 px-4 py-4 shadow-lg shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 sm:mb-8 sm:rounded-[32px] sm:px-6 sm:py-5">
+        <main className="w-full min-w-0 max-w-full flex-1 overflow-x-hidden">
+          <header className="finleaf-panel mb-5 flex flex-col gap-5 rounded-[26px] border border-slate-200 bg-white/90 px-4 py-4 shadow-lg shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 sm:mb-8 sm:rounded-[32px] sm:px-6 sm:py-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{title}</p>
@@ -82,12 +82,12 @@ export default function NavigationLayout({ title, subtitle, children }: Navigati
             </div>
           </header>
 
-          {children}
+          <div className="finleaf-content">{children}</div>
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+      <nav className="fixed inset-x-0 bottom-0 z-40 overflow-hidden border-t border-slate-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
+        <div className="mx-auto grid w-full max-w-md grid-cols-4 gap-1">
           {navItems.map((item) => {
             const active = pathname === item.href
             return (

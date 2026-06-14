@@ -34,6 +34,7 @@ export default function StatusToast({ message, variant = 'info', onDismiss }: St
 
   return (
     <div className="fixed right-4 top-4 z-50 w-[calc(100%-2rem)] max-w-md sm:right-6 sm:top-6" role="status" aria-live="polite">
+      <div className="finleaf-modal">
       <div className={`rounded-3xl border px-5 py-4 shadow-2xl backdrop-blur-xl ${styles.panel}`}>
         <div className="flex items-start gap-3">
           <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${styles.dot}`} aria-hidden="true" />
@@ -52,6 +53,7 @@ export default function StatusToast({ message, variant = 'info', onDismiss }: St
             </button>
           ) : null}
         </div>
+      </div>
       </div>
     </div>
   )

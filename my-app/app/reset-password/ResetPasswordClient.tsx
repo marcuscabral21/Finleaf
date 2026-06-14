@@ -95,8 +95,8 @@ export default function ResetPasswordClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_26%)] px-3 py-4 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-8">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:gap-8 sm:rounded-[32px] sm:p-10">
+    <main className="finleaf-shell min-h-screen px-3 py-4 text-slate-900 dark:text-slate-100 sm:px-4 sm:py-8">
+      <div className="finleaf-panel finleaf-content mx-auto flex w-full max-w-3xl flex-col gap-6 rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-2xl shadow-slate-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:gap-8 sm:rounded-[32px] sm:p-10">
         <div className="space-y-3">
           <h1 className="text-2xl font-semibold sm:text-3xl">{t('reset.title')}</h1>
           <p className="text-sm text-slate-600 dark:text-slate-300">

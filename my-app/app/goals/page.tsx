@@ -173,8 +173,8 @@ export default function Page() {
                     </div>
                   </div>
 
-                  <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                    <div className={`${goal.color} h-full`} style={{ width: `${progress}%` }} />
+                  <div className="finleaf-progress mt-4 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                    <div className={`${goal.color} h-full transition-[width] duration-700 ease-out`} style={{ width: `${progress}%` }} />
                   </div>
 
                   <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr] lg:grid-cols-[1fr_0.8fr_0.8fr]">
