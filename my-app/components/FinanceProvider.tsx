@@ -244,6 +244,13 @@ function formatLocalDate(date: Date) {
   return `${year}-${month}-${day}`
 }
 
+function getArchiveCutoffDate() {
+  const cutoff = new Date()
+  cutoff.setFullYear(cutoff.getFullYear() - 1)
+
+  return formatLocalDate(cutoff)
+}
+
 function getMonthlyIncomeNote(monthKey: string) {
   return `finleaf-monthly-income:${monthKey}`
 }
@@ -381,15 +388,31 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     setInvestmentBaseState(profileSettings.investmentBase)
     setPaydayState(profileSettings.payday)
 
+    const { error: archiveError } = await supabase
+      .from('transactions')
+      .update({
+        archived_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', currentUser.id)
+      .is('archived_at', null)
+      .lt('transaction_date', getArchiveCutoffDate())
+
+    const transactionsQuery = supabase
+      .from('transactions')
+      .select('id,category_id,amount,description,notes,type,transaction_date,created_at,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+      .eq('user_id', currentUser.id)
+      .order('transaction_date', { ascending: false })
+      .order('created_at', { ascending: false })
+
+    if (!archiveError) {
+      transactionsQuery.is('archived_at', null)
+    }
+
     const [settingsResult, categoriesResult, transactionsResult, goalsResult] = await Promise.all([
       supabase.from('user_settings').select('currency').eq('user_id', currentUser.id).maybeSingle(),
       supabase.from('categories').select('id,name,icon_light,icon_dark,color_light,color_dark').or(`user_id.eq.${currentUser.id},user_id.is.null`),
-      supabase
-        .from('transactions')
-        .select('id,category_id,amount,description,notes,type,transaction_date,created_at,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
-        .eq('user_id', currentUser.id)
-        .order('transaction_date', { ascending: false })
-        .order('created_at', { ascending: false }),
+      transactionsQuery,
       supabase
         .from('goals')
         .select('id,name,target_amount,current_amount,deadline,color_light')

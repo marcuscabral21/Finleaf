@@ -6,6 +6,7 @@ const translations = {
     // Navigation
     'nav.home': 'Home',
     'nav.history': 'Histórico',
+    'nav.stats': 'Stats',
     'nav.goals': 'Metas',
     'nav.profile': 'Perfil',
     'nav.manageMoney': 'Gerencie o seu dinheiro',
@@ -14,6 +15,7 @@ const translations = {
     'nav.tipDescription': 'Use a aba Histórico para filtrar gastos por dia, semana ou mês e veja para onde o seu dinheiro está indo.',
     'nav.dashboard': 'Painel',
     'nav.transactions': 'Transações',
+    'nav.insights': 'Análise',
     'nav.account': 'Conta',
 
     // Dashboard
@@ -73,6 +75,34 @@ const translations = {
     'history.csvExpense': 'Despesa',
     'history.csvIncome': 'Receita',
     'history.csvFilename': 'transacoes.csv',
+
+    // Stats
+    'stats.title': 'Stats',
+    'stats.subtitle': 'Gastos entre pagamentos',
+    'stats.payCycle': 'Ciclo de pagamento',
+    'stats.payCycleDesc': 'Veja os gastos desde um pagamento até o próximo.',
+    'stats.monthFilter': 'Mês',
+    'stats.retentionDesc': 'A página de stats considera apenas os últimos 12 meses.',
+    'stats.noPeriod': 'Sem período',
+    'stats.expenseItems': 'gastos',
+    'stats.empty': 'Ainda não há gastos para mostrar neste período.',
+    'stats.totalSpent': 'Total gasto',
+    'stats.dailyAverage': 'Média por dia',
+    'stats.topCategory': 'Maior categoria',
+    'stats.comparison': 'Comparação',
+    'stats.noComparison': 'Quando houver outro ciclo de pagamento, a comparação aparece aqui.',
+    'stats.moreThanPrevious': '{percent}% acima do período anterior',
+    'stats.lessThanPrevious': '{percent}% abaixo do período anterior',
+    'stats.sameAsPrevious': 'Igual ao período anterior',
+    'stats.byCategory': 'Por categoria',
+    'stats.byCategoryDesc': 'Distribuição dos gastos no ciclo selecionado.',
+    'stats.allExpenses': 'Todos os gastos',
+    'stats.noData': 'Sem dados',
+    'stats.annual': 'Estatística anual',
+    'stats.annualDesc': 'Resumo do ano selecionado dentro dos últimos 12 meses.',
+    'stats.annualTotal': 'Total anual',
+    'stats.monthlyAverage': 'Média mensal',
+    'stats.highestMonth': 'Mês com mais gastos',
 
     // Goals
     'goals.title': 'Metas',
@@ -234,6 +264,7 @@ const translations = {
     // Navigation
     'nav.home': 'Home',
     'nav.history': 'History',
+    'nav.stats': 'Stats',
     'nav.goals': 'Goals',
     'nav.profile': 'Profile',
     'nav.manageMoney': 'Manage your money',
@@ -242,6 +273,7 @@ const translations = {
     'nav.tipDescription': 'Use the History tab to filter expenses by day, week or month and see where your money is going.',
     'nav.dashboard': 'Dashboard',
     'nav.transactions': 'Transactions',
+    'nav.insights': 'Insights',
     'nav.account': 'Account',
 
     // Dashboard
@@ -301,6 +333,34 @@ const translations = {
     'history.csvExpense': 'Expense',
     'history.csvIncome': 'Income',
     'history.csvFilename': 'transactions.csv',
+
+    // Stats
+    'stats.title': 'Stats',
+    'stats.subtitle': 'Expenses between paydays',
+    'stats.payCycle': 'Pay cycle',
+    'stats.payCycleDesc': 'See expenses from one payday to the next.',
+    'stats.monthFilter': 'Month',
+    'stats.retentionDesc': 'The stats page only considers the last 12 months.',
+    'stats.noPeriod': 'No period',
+    'stats.expenseItems': 'expenses',
+    'stats.empty': 'There are no expenses to show for this period yet.',
+    'stats.totalSpent': 'Total spent',
+    'stats.dailyAverage': 'Daily average',
+    'stats.topCategory': 'Top category',
+    'stats.comparison': 'Comparison',
+    'stats.noComparison': 'When another pay cycle exists, the comparison appears here.',
+    'stats.moreThanPrevious': '{percent}% higher than the previous period',
+    'stats.lessThanPrevious': '{percent}% lower than the previous period',
+    'stats.sameAsPrevious': 'Same as the previous period',
+    'stats.byCategory': 'By category',
+    'stats.byCategoryDesc': 'Expense distribution in the selected cycle.',
+    'stats.allExpenses': 'All expenses',
+    'stats.noData': 'No data',
+    'stats.annual': 'Annual stats',
+    'stats.annualDesc': 'Summary of the selected year within the last 12 months.',
+    'stats.annualTotal': 'Annual total',
+    'stats.monthlyAverage': 'Monthly average',
+    'stats.highestMonth': 'Highest spending month',
 
     // Goals
     'goals.title': 'Goals',

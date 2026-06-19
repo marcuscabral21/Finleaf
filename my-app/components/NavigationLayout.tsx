@@ -9,6 +9,7 @@ import { useTranslation } from './useTranslation'
 const navItems = [
   { labelKey: 'nav.home', href: '/', badgeKey: 'nav.dashboard', icon: '⌂' },
   { labelKey: 'nav.history', href: '/history', badgeKey: 'nav.transactions', icon: '≡' },
+  { labelKey: 'nav.stats', href: '/stats', badgeKey: 'nav.insights', icon: '◍' },
   { labelKey: 'nav.goals', href: '/goals', badgeKey: 'nav.goals', icon: '◎' },
   { labelKey: 'nav.profile', href: '/profile', badgeKey: 'nav.account', icon: '◦' },
 ]
@@ -87,7 +88,7 @@ export default function NavigationLayout({ title, subtitle, children }: Navigati
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 overflow-hidden border-t border-slate-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
-        <div className="mx-auto grid w-full max-w-md grid-cols-4 gap-1">
+        <div className="mx-auto grid w-full max-w-lg grid-cols-5 gap-1">
           {navItems.map((item) => {
             const active = pathname === item.href
             return (
