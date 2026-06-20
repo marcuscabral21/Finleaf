@@ -57,7 +57,7 @@ export default function Page() {
   const [selectedMonth, setSelectedMonth] = useState(today.slice(0, 7))
   const [showArchived, setShowArchived] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editValues, setEditValues] = useState({ category: '', amount: '', date: '', notes: '' })
+  const [editValues, setEditValues] = useState({ category: '', amount: '', date: '', type: 'expense' as 'income' | 'expense', notes: '' })
   const [exportPeriod, setExportPeriod] = useState<'month' | 'year'>('month')
   const [exportDate, setExportDate] = useState(today.slice(0, 7))
   const { transactions, archivedTransactions, formatAmount, updateTransaction, deleteTransaction, restoreArchivedTransaction } = useFinance()
@@ -99,7 +99,13 @@ export default function Page() {
     const transaction = transactions.find((item) => item.id === transactionId)
     if (!transaction) return
     setEditingId(transactionId)
-    setEditValues({ category: transaction.category, amount: transaction.amount.toString(), date: transaction.date, notes: transaction.notes ?? '' })
+    setEditValues({
+      category: transaction.category,
+      amount: transaction.amount.toString(),
+      date: transaction.date,
+      type: transaction.type,
+      notes: transaction.notes ?? '',
+    })
   }
 
   function saveEdit() {
@@ -108,6 +114,7 @@ export default function Page() {
       category: editValues.category,
       amount: Number(editValues.amount) || 0,
       date: editValues.date,
+      type: editValues.type,
       notes: editValues.notes.trim() || undefined,
     })
     setEditingId(null)

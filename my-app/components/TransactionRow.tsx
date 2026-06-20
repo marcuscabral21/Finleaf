@@ -13,8 +13,8 @@ interface TransactionRowProps {
   transactionCategories: CategoryOption[]
   showArchived: boolean
   isEditing: boolean
-  editValues: { category: string; amount: string; date: string; notes: string }
-  setEditValues: Dispatch<SetStateAction<{ category: string; amount: string; date: string; notes: string }>>
+  editValues: { category: string; amount: string; date: string; type: 'income' | 'expense'; notes: string }
+  setEditValues: Dispatch<SetStateAction<{ category: string; amount: string; date: string; type: 'income' | 'expense'; notes: string }>>
   formatAmount: (value: number) => string
   onEdit: () => void
   onSave: () => void
@@ -67,11 +67,29 @@ export default function TransactionRow({
                 ))}
               </select>
             </div>
+            <div className="grid gap-2">
+              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('modal.type')}</label>
+              <select
+                value={editValues.type}
+                onChange={(event) => setEditValues((prev) => ({ ...prev, type: event.target.value as 'income' | 'expense' }))}
+                className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              >
+                <option value="expense">{t('modal.expense')}</option>
+                <option value="income">{t('modal.income')}</option>
+              </select>
+            </div>
             <input
               type="date"
               value={editValues.date}
               onChange={(event) => setEditValues((prev) => ({ ...prev, date: event.target.value }))}
               className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+            <input
+              type="number"
+              value={editValues.amount}
+              onChange={(event) => setEditValues((prev) => ({ ...prev, amount: event.target.value }))}
+              className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              placeholder="0.00"
             />
             <textarea
               value={editValues.notes}
