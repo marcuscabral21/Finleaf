@@ -119,11 +119,11 @@ export default function Page() {
 
   const availableBalance = useMemo(
     () =>
-      cycleTransactions.reduce(
+      transactions.reduce(
         (sum, item) => sum + (item.type === 'income' ? item.amount : -item.amount),
         0
       ),
-    [cycleTransactions]
+    [transactions]
   )
 
   const daysSinceCycleStart = useMemo(
