@@ -858,6 +858,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     if (!user) return
 
     const category = updates.category ? categories.find((item) => item.name === updates.category) : undefined
+    const previousTransaction = transactions.find((transaction) => transaction.id === id)
+
     setTransactions((current) =>
       current.map((transaction) =>
         transaction.id === id
@@ -884,6 +886,23 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       })
       .eq('id', id)
       .eq('user_id', user.id)
+      .select('id,category_id,amount,description,notes,type,transaction_date,created_at,archived_at,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          if (previousTransaction) {
+            setTransactions((current) =>
+              current.map((transaction) => (transaction.id === id ? previousTransaction : transaction))
+            )
+          }
+          return
+        }
+
+        const savedTransaction = mapTransaction(data as unknown as DbTransaction)
+        setTransactions((current) =>
+          current.map((transaction) => (transaction.id === id ? savedTransaction : transaction))
+        )
+      })
   }
 
   const deleteTransaction = (id: string) => {
