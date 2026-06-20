@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import NavigationLayout from '@/components/NavigationLayout'
+import TransactionRow from '@/components/TransactionRow'
 import { useFinance, CATEGORIES, getCategoryTranslationKey } from '@/components/FinanceProvider'
 import { useTranslation } from '@/components/useTranslation'
 
@@ -54,11 +55,15 @@ export default function Page() {
   const [selectedDate, setSelectedDate] = useState(today)
   const [selectedWeekStart, setSelectedWeekStart] = useState(getWeekStart(today))
   const [selectedMonth, setSelectedMonth] = useState(today.slice(0, 7))
+  const [showArchived, setShowArchived] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValues, setEditValues] = useState({ category: '', amount: '', date: '', notes: '' })
-  const { transactions, formatAmount, updateTransaction, deleteTransaction } = useFinance()
+  const [exportPeriod, setExportPeriod] = useState<'month' | 'year'>('month')
+  const [exportDate, setExportDate] = useState(today.slice(0, 7))
+  const { transactions, archivedTransactions, formatAmount, updateTransaction, deleteTransaction, restoreArchivedTransaction } = useFinance()
   const { t, translateNote } = useTranslation()
   const transactionCategories = CATEGORIES
+  const visibleTransactions = showArchived ? archivedTransactions : transactions
   const selectedWeekEnd = addDays(selectedWeekStart, 6)
   const selectedPeriod = filter === 'day' ? selectedDate : filter === 'week' ? getWeekLabel(selectedWeekStart) : filter === 'month' ? selectedMonth : t('history.allPeriod')
   const filterOptions = [
@@ -70,13 +75,24 @@ export default function Page() {
 
   const filteredTransactions = useMemo(
     () =>
-      transactions.filter((transaction) => {
+        visibleTransactions.filter((transaction) => {
         if (filter === 'day') return transaction.date === selectedDate
         if (filter === 'week') return transaction.date >= selectedWeekStart && transaction.date <= selectedWeekEnd
         if (filter === 'month') return transaction.date.startsWith(selectedMonth)
         return true
       }),
-    [filter, selectedDate, selectedMonth, selectedWeekEnd, selectedWeekStart, transactions]
+    [filter, selectedDate, selectedMonth, selectedWeekEnd, selectedWeekStart, visibleTransactions]
+  )
+
+  const exportPeriodLabel = exportPeriod === 'month' ? exportDate : `${exportDate.slice(0, 4)}`
+  const exportTransactions = useMemo(
+    () =>
+      filteredTransactions.filter((transaction) =>
+        exportPeriod === 'month'
+          ? transaction.date.startsWith(exportDate)
+          : transaction.date.startsWith(exportDate.slice(0, 4))
+      ),
+    [exportDate, exportPeriod, filteredTransactions]
   )
 
   function handleEditClick(transactionId: string) {
@@ -98,13 +114,21 @@ export default function Page() {
   }
 
   function downloadCsv() {
-    const transactionsByMonth = filteredTransactions.reduce((groups, transaction) => {
+    const transactionsByMonth = exportTransactions.reduce((groups, transaction) => {
       const monthKey = transaction.date.slice(0, 7)
       groups[monthKey] = [...(groups[monthKey] ?? []), transaction]
       return groups
-    }, {} as Record<string, typeof filteredTransactions>)
+    }, {} as Record<string, typeof exportTransactions>)
 
-    const csvSections = Object.entries(transactionsByMonth)
+    const totalIncome = exportTransactions.filter((transaction) => transaction.type === 'income').reduce((sum, transaction) => sum + transaction.amount, 0)
+    const totalExpense = exportTransactions.filter((transaction) => transaction.type === 'expense').reduce((sum, transaction) => sum + transaction.amount, 0)
+    const csvSections = [
+      [t('history.csvSummary')],
+      [t('history.csvPeriod'), `${t('history.exportBy')}: ${exportPeriod === 'month' ? t('history.exportMonth') : t('history.exportYear')} ${exportPeriodLabel}`],
+      [t('history.csvIncome'), totalIncome.toString()],
+      [t('history.csvExpense'), totalExpense.toString()],
+      [],
+      ...Object.entries(transactionsByMonth)
       .sort(([firstMonth], [secondMonth]) => secondMonth.localeCompare(firstMonth))
       .flatMap(([month, monthTransactions]) => [
         [`${t('history.csvMonth')}: ${month}`],
@@ -117,7 +141,8 @@ export default function Page() {
           translateNote(transaction.notes) ?? '',
         ]),
         [],
-      ])
+      ]),
+    ]
 
     const csvContent = csvSections.map((row) => row.map(escapeCsvValue).join(',')).join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -232,10 +257,45 @@ export default function Page() {
               <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('history.transactions')}</p>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{filteredTransactions.length} {t('history.found')}</p>
             </div>
-            <div className="grid grid-cols-[1fr_auto] items-center gap-2 sm:flex">
-              <span className="truncate rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                {selectedPeriod}
-              </span>
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_auto_auto] items-center">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="grid gap-2 rounded-3xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('history.exportBy')}</span>
+                  <select
+                    value={exportPeriod}
+                    onChange={(event) => setExportPeriod(event.target.value as 'month' | 'year')}
+                    className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  >
+                    <option value="month">{t('history.exportMonth')}</option>
+                    <option value="year">{t('history.exportYear')}</option>
+                  </select>
+                </label>
+                <label className="grid gap-2 rounded-3xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{exportPeriod === 'month' ? t('history.month') : t('history.year')}</span>
+                  <input
+                    type={exportPeriod === 'month' ? 'month' : 'number'}
+                    value={exportDate}
+                    min={exportPeriod === 'year' ? '2000' : undefined}
+                    max={exportPeriod === 'year' ? new Date().getFullYear().toString() : undefined}
+                    onChange={(event) => setExportDate(event.target.value)}
+                    className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                </label>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowArchived((current) => !current)
+                  setEditingId(null)
+                }}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  showArchived
+                    ? 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                    : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900'
+                }`}
+              >
+                {showArchived ? t('history.active') : t('history.archived')}
+              </button>
               <button
                 type="button"
                 onClick={downloadCsv}
@@ -247,96 +307,28 @@ export default function Page() {
           </div>
 
           <div className="space-y-3">
-            {filteredTransactions.map((transaction) => (
-              <div key={transaction.id} className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(190px,auto)] md:items-center">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t(getCategoryTranslationKey(transaction.category))}</p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{t(transaction.type === 'expense' ? 'history.csvExpense' : 'history.csvIncome')}</p>
-                  {transaction.notes ? <p className="mt-2 text-xs normal-case tracking-normal text-slate-500 dark:text-slate-400">{translateNote(transaction.notes)}</p> : null}
-                </div>
-                <div>
-                  {editingId === transaction.id ? (
-                    <div className="flex flex-col gap-2">
-                      <select
-                        value={editValues.category}
-                        onChange={(event) => setEditValues((prev) => ({ ...prev, category: event.target.value }))}
-                        className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                      >
-                        {transactionCategories.map((category) => (
-                          <option key={category.name} value={category.name}>
-                            {category.icon} {t(getCategoryTranslationKey(category.name))}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="date"
-                        value={editValues.date}
-                        onChange={(event) => setEditValues((prev) => ({ ...prev, date: event.target.value }))}
-                        className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                      />
-                      <textarea
-                        value={editValues.notes}
-                        onChange={(event) => setEditValues((prev) => ({ ...prev, notes: event.target.value }))}
-                        placeholder={t('modal.commentPlaceholder')}
-                        className="min-h-20 resize-none rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                      />
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-600 dark:text-slate-300">{transaction.date}</p>
-                  )}
-                </div>
-                <div className="flex flex-col gap-3 md:items-end">
-                  {editingId === transaction.id ? (
-                    <input
-                      type="number"
-                      value={editValues.amount}
-                      onChange={(event) => setEditValues((prev) => ({ ...prev, amount: event.target.value }))}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                    />
-                  ) : (
-                    <p className={`text-lg font-semibold md:text-right ${transaction.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'}`}>
-                      {transaction.type === 'expense' ? '-' : '+'} {formatAmount(transaction.amount)}
-                    </p>
-                  )}
-                  <div className="grid w-full grid-cols-2 gap-2 md:w-auto">
-                    {editingId === transaction.id ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={saveEdit}
-                          className="min-w-20 whitespace-nowrap rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-400"
-                        >
-                          {t('history.save')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className="min-w-20 whitespace-nowrap rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                        >
-                          {t('history.cancel')}
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => handleEditClick(transaction.id)}
-                          className="min-w-20 whitespace-nowrap rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                        >
-                          {t('history.edit')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteTransaction(transaction.id)}
-                          className="min-w-20 whitespace-nowrap rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-400 dark:hover:bg-rose-900"
-                        >
-                          {t('history.delete')}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
+            {filteredTransactions.length === 0 ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('history.noTransactions')}</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{showArchived ? t('history.noArchived') : t('history.noTransactionsDesc')}</p>
               </div>
+            ) : (
+              filteredTransactions.map((transaction) => (
+                <TransactionRow
+                  key={transaction.id}
+                  transaction={transaction}
+                transactionCategories={transactionCategories}
+                showArchived={showArchived}
+                isEditing={editingId === transaction.id}
+                editValues={editValues}
+                setEditValues={setEditValues}
+                formatAmount={formatAmount}
+                onEdit={() => handleEditClick(transaction.id)}
+                onSave={saveEdit}
+                onCancel={() => setEditingId(null)}
+                onDelete={() => deleteTransaction(transaction.id)}
+                onRestore={() => restoreArchivedTransaction(transaction.id)}
+              />
             ))}
           </div>
         </div>

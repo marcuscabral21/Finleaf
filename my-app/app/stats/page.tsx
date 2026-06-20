@@ -119,6 +119,29 @@ export default function Page() {
   const comparisonValue = selectedCycle && previousCycle ? selectedCycle.total - previousCycle.total : 0
   const comparisonPercent = previousCycle && previousCycle.total > 0 ? Math.round((comparisonValue / previousCycle.total) * 100) : 0
   const comparisonKey = comparisonValue > 0 ? 'stats.moreThanPrevious' : comparisonValue < 0 ? 'stats.lessThanPrevious' : 'stats.sameAsPrevious'
+  const dailyPace = selectedCycle ? selectedCycle.total / cycleDays : 0
+  const economyEstimate = selectedCycle && previousCycle ? Math.max(0, previousCycle.total - selectedCycle.total) : 0
+
+  const topGrowingCategory = useMemo(() => {
+    if (!selectedCycle || !previousCycle) {
+      return null
+    }
+
+    const currentTotals = selectedCycle.expenses.reduce((totals, transaction) => {
+      totals[transaction.category] = (totals[transaction.category] ?? 0) + transaction.amount
+      return totals
+    }, {} as Record<string, number>)
+
+    const previousTotals = previousCycle.expenses.reduce((totals, transaction) => {
+      totals[transaction.category] = (totals[transaction.category] ?? 0) + transaction.amount
+      return totals
+    }, {} as Record<string, number>)
+
+    return Object.entries(currentTotals)
+      .map(([category, amount]) => ({ category, growth: amount - (previousTotals[category] ?? 0) }))
+      .filter((item) => item.growth > 0)
+      .sort((first, second) => second.growth - first.growth)[0] || null
+  }, [previousCycle, selectedCycle])
 
   const categoryStats = useMemo(() => {
     if (!selectedCycle) {
@@ -238,7 +261,7 @@ export default function Page() {
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{t('stats.totalSpent')}</p>
                 <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(selectedCycle?.total ?? 0)}</p>
@@ -248,8 +271,19 @@ export default function Page() {
                 <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(averagePerDay)}</p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{t('stats.topCategory')}</p>
-                <p className="mt-4 text-xl font-semibold text-slate-900 dark:text-slate-100">{topCategory ? t(getCategoryTranslationKey(topCategory.category)) : t('stats.noData')}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{t('stats.dailyPace')}</p>
+                <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(dailyPace)}</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{t('stats.categoryGrowthDesc')}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{t('stats.categoryGrowth')}</p>
+                <p className="mt-4 text-xl font-semibold text-slate-900 dark:text-slate-100">{topGrowingCategory ? t(getCategoryTranslationKey(topGrowingCategory.category)) : t('stats.noData')}</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{topGrowingCategory ? formatAmount(topGrowingCategory.growth) : t('stats.noData')}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{t('stats.economyEstimate')}</p>
+                <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(economyEstimate)}</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{t('stats.economyDesc')}</p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{t('stats.comparison')}</p>
@@ -275,7 +309,8 @@ export default function Page() {
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('stats.byCategoryDesc')}</p>
             </div>
             <div className="space-y-4">
-              {categoryStats.map((item) => (
+              {categoryStats.length > 0 ? (
+              categoryStats.map((item) => (
                 <div key={item.category}>
                   <div className="mb-2 flex items-center justify-between gap-3 text-sm">
                     <span className="font-semibold text-slate-900 dark:text-slate-100">{t(getCategoryTranslationKey(item.category))}</span>
@@ -285,8 +320,10 @@ export default function Page() {
                     <div className="h-full rounded-full bg-emerald-500" style={{ width: `${item.percent}%` }} />
                   </div>
                 </div>
-              ))}
-              {categoryStats.length === 0 ? <p className="text-sm text-slate-500 dark:text-slate-400">{t('stats.empty')}</p> : null}
+              ))
+            ) : (
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('stats.empty')}</p>
+            )}
             </div>
           </div>
 

@@ -1,8 +1,11 @@
 ﻿'use client'
 
 import { useMemo, useState } from 'react'
+import { AlertTriangle, CircleDollarSign, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import NavigationLayout from '@/components/NavigationLayout'
+import SectionPanel from '@/components/SectionPanel'
+import StatCard from '@/components/StatCard'
 import { useFinance, CATEGORIES, getCategoryTranslationKey } from '@/components/FinanceProvider'
 import { useTranslation } from '@/components/useTranslation'
 
@@ -41,6 +44,24 @@ function formatLocalDate(date: Date) {
   return `${year}-${month}-${day}`
 }
 
+function parseLocalDate(value: string) {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function getDaysBetween(startDate: string, endDate: string) {
+  const start = parseLocalDate(startDate).getTime()
+  const end = parseLocalDate(endDate).getTime()
+  return Math.max(1, Math.round((end - start) / 86400000))
+}
+
+function getPreviousCycleStart(currentCycleStart: string, payday: string) {
+  const start = parseLocalDate(currentCycleStart)
+  const requestedDay = Math.min(Math.max(Number(payday) || 1, 1), 31)
+  const previousMonthStart = getPaydayDate(start.getFullYear(), start.getMonth() - 1, requestedDay)
+  return formatLocalDate(previousMonthStart)
+}
+
 export default function Page() {
   const [activeCategory, setActiveCategory] = useState(categories[0].key)
   const [isAvailableChartHovered, setIsAvailableChartHovered] = useState(false)
@@ -53,7 +74,7 @@ export default function Page() {
     type: 'expense' as 'income' | 'expense',
     notes: '',
   })
-  const { transactions, goals, payday, formatAmount, addTransaction, updateTransaction, deleteTransaction } = useFinance()
+  const { transactions, goals, payday, categoryBudgets, formatAmount, setCategoryBudget, addTransaction, updateTransaction, deleteTransaction } = useFinance()
   const { t, translateNote } = useTranslation()
   const transactionCategories = CATEGORIES
   const payCycleBounds = useMemo(() => getPayCycleBounds(payday), [payday])
@@ -65,14 +86,35 @@ export default function Page() {
     [payCycleBounds, transactions]
   )
 
+  const previousCycleStart = useMemo(() => getPreviousCycleStart(payCycleBounds.cycleStart, payday), [payCycleBounds.cycleStart, payday])
+  const previousCycleTransactions = useMemo(
+    () =>
+      transactions.filter(
+        (transaction) => transaction.date >= previousCycleStart && transaction.date < payCycleBounds.cycleStart
+      ),
+    [previousCycleStart, payCycleBounds.cycleStart, transactions]
+  )
+
+  const today = useMemo(() => formatLocalDate(new Date()), [])
+
   const totalIncome = useMemo(
     () => transactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
     [transactions]
   )
 
+  const cycleIncome = useMemo(
+    () => cycleTransactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
+    [cycleTransactions]
+  )
+
   const totalExpenses = useMemo(
     () => cycleTransactions.filter((item) => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0),
     [cycleTransactions]
+  )
+
+  const previousCycleExpenseTotal = useMemo(
+    () => previousCycleTransactions.filter((item) => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0),
+    [previousCycleTransactions]
   )
 
   const availableBalance = useMemo(
@@ -83,7 +125,40 @@ export default function Page() {
       ),
     [transactions]
   )
-  const today = useMemo(() => formatLocalDate(new Date()), [])
+
+  const daysSinceCycleStart = useMemo(
+    () => Math.max(1, getDaysBetween(payCycleBounds.cycleStart, today)),
+    [payCycleBounds.cycleStart, today]
+  )
+
+  const daysUntilNextCycle = useMemo(
+    () => Math.max(0, getDaysBetween(today, payCycleBounds.nextCycleStart)),
+    [payCycleBounds.nextCycleStart, today]
+  )
+
+  const averageDailySpend = useMemo(() => (totalExpenses / daysSinceCycleStart) || 0, [totalExpenses, daysSinceCycleStart])
+  const idealDailyPace = useMemo(() => (daysUntilNextCycle > 0 ? Math.max(0, availableBalance / daysUntilNextCycle) : 0), [availableBalance, daysUntilNextCycle])
+  const estimatedSavings = useMemo(() => Math.max(0, cycleIncome - totalExpenses), [cycleIncome, totalExpenses])
+
+  const topGrowingCategory = useMemo(() => {
+    const currentTotals = cycleTransactions.reduce((totals, transaction) => {
+      if (transaction.type !== 'expense') return totals
+      totals[transaction.category] = (totals[transaction.category] ?? 0) + transaction.amount
+      return totals
+    }, {} as Record<string, number>)
+
+    const previousTotals = previousCycleTransactions.reduce((totals, transaction) => {
+      if (transaction.type !== 'expense') return totals
+      totals[transaction.category] = (totals[transaction.category] ?? 0) + transaction.amount
+      return totals
+    }, {} as Record<string, number>)
+
+    return Object.entries(currentTotals)
+      .map(([category, amount]) => ({ category, growth: amount - (previousTotals[category] ?? 0) }))
+      .filter((item) => item.growth > 0)
+      .sort((first, second) => second.growth - first.growth)[0]
+  }, [cycleTransactions, previousCycleTransactions])
+
   const savings = useMemo(
     () =>
       goals
@@ -114,10 +189,14 @@ export default function Page() {
           }
         })
         const amount = breakdown.reduce((sum, item) => sum + item.amount, 0)
+        const budget = category.categoryNames.reduce((sum, categoryName) => sum + (categoryBudgets[categoryName] ?? 0), 0)
 
         return {
           ...category,
           amount,
+          budget,
+          budgetPercent: budget > 0 ? Math.min(100, Math.round((amount / budget) * 100)) : 0,
+          budgetRemaining: budget > 0 ? budget - amount : 0,
           percent: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100) : 0,
           breakdown: breakdown.map((item) => ({
             ...item,
@@ -125,9 +204,11 @@ export default function Page() {
           })),
         }
       }),
-    [cycleTransactions, totalExpenses]
+    [categoryBudgets, cycleTransactions, totalExpenses]
   )
   const selectedCategory = dashboardCategories.find((category) => category.key === activeCategory) ?? dashboardCategories[0]
+  const selectedBudgetCategory = selectedCategory.categoryNames[0]
+  const selectedBudgetValue = selectedBudgetCategory ? categoryBudgets[selectedBudgetCategory] ?? 0 : 0
   const recentTransactions = transactions.slice(0, 6)
   const isShowingAvailableDetail = isAvailableChartHovered && availableBalance > 0
   const availableChartAmount = Math.max(availableBalance, 0)
@@ -157,6 +238,41 @@ export default function Page() {
       chartOffset,
     }
   }, [availableChartAmount, categoryChartSegments, dashboardCategories])
+  const dashboardAlerts = useMemo(() => {
+    const alerts = []
+    const daysUntilPayday = Math.max(0, Math.ceil((new Date(`${payCycleBounds.nextCycleStart}T00:00:00`).getTime() - new Date().setHours(0, 0, 0, 0)) / 86400000))
+    const overBudgetCategory = dashboardCategories.find((category) => category.budget > 0 && category.amount > category.budget)
+    const nearBudgetCategory = dashboardCategories.find((category) => category.budget > 0 && category.amount <= category.budget && category.amount / category.budget >= 0.8)
+    const biggestCategory = [...dashboardCategories].sort((first, second) => second.amount - first.amount)[0]
+
+    if (overBudgetCategory) {
+      alerts.push(t('dashboard.alertOverBudget').replace('{category}', t(overBudgetCategory.labelKey)).replace('{amount}', formatAmount(overBudgetCategory.amount - overBudgetCategory.budget)))
+    } else if (nearBudgetCategory) {
+      alerts.push(t('dashboard.alertNearBudget').replace('{category}', t(nearBudgetCategory.labelKey)).replace('{percent}', nearBudgetCategory.budgetPercent.toString()))
+    }
+
+    if (averageDailySpend > idealDailyPace && availableBalance > 0) {
+      alerts.push(t('dashboard.alertDailyPace'))
+    }
+
+    if (availableBalance < 0) {
+      alerts.push(t('dashboard.alertNegativeBalance'))
+    } else {
+      alerts.push(t('dashboard.alertPayday').replace('{days}', daysUntilPayday.toString()).replace('{amount}', formatAmount(availableBalance)))
+    }
+
+    if (topGrowingCategory) {
+      alerts.push(
+        t('dashboard.alertTopGrowingCategory')
+          .replace('{category}', t(getCategoryTranslationKey(topGrowingCategory.category)))
+          .replace('{amount}', formatAmount(topGrowingCategory.growth))
+      )
+    } else if (biggestCategory && biggestCategory.amount > 0) {
+      alerts.push(t('dashboard.alertTopCategory').replace('{category}', t(biggestCategory.labelKey)).replace('{amount}', formatAmount(biggestCategory.amount)))
+    }
+
+    return alerts.slice(0, 4)
+  }, [availableBalance, averageDailySpend, dashboardCategories, formatAmount, idealDailyPace, payCycleBounds.nextCycleStart, t, topGrowingCategory])
 
   function openAddModal() {
     setEditingTransaction(null)
@@ -210,28 +326,56 @@ export default function Page() {
     deleteTransaction(transactionId)
   }
 
+  const summaryMetrics = [
+    {
+      icon: <CircleDollarSign className="h-6 w-6" />,
+      label: t('dashboard.available'),
+      value: formatAmount(availableBalance),
+      description: t('dashboard.trendUpLastMonth'),
+    },
+    {
+      icon: <TrendingUp className="h-6 w-6" />,
+      label: t('dashboard.spent'),
+      value: formatAmount(totalExpenses),
+      description: t('dashboard.trendDownPreviousMonth'),
+    },
+    {
+      icon: <AlertTriangle className="h-6 w-6" />,
+      label: t('dashboard.savings'),
+      value: formatAmount(savings),
+      description: t('dashboard.savingsTrend'),
+    },
+  ]
+
   return (
     <NavigationLayout title={t('dashboard.title')} subtitle={t('dashboard.subtitle')}>
       <div className="grid gap-6">
         <div className="grid gap-4 md:grid-cols-3 lg:gap-6">
-          <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.available')}</p>
-            <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-3xl">{formatAmount(availableBalance)}</p>
-            <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{t('dashboard.trendUpLastMonth')}</p>
-          </div>
-
-          <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.spent')}</p>
-            <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-3xl">{formatAmount(totalExpenses)}</p>
-            <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">{t('dashboard.trendDownPreviousMonth')}</p>
-          </div>
-
-          <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 sm:text-sm">{t('dashboard.savings')}</p>
-            <p className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-3xl">{formatAmount(savings)}</p>
-            <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{t('dashboard.savingsTrend')}</p>
-          </div>
+          {summaryMetrics.map((metric) => (
+            <StatCard
+              key={metric.label}
+              icon={metric.icon}
+              label={metric.label}
+              value={metric.value}
+              description={metric.description}
+            />
+          ))}
         </div>
+
+        <SectionPanel title={t('dashboard.insights')} subtitle={t('dashboard.insightsDesc')} actions={<Link href="/stats" className="w-full rounded-full bg-slate-100 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto sm:py-2">{t('nav.stats')}</Link>}>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {dashboardAlerts.map((alert) => (
+              <div key={alert} className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+                {alert}
+              </div>
+            ))}
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('dashboard.estimatedSavings')}</p>
+              <p className="mt-3 text-2xl font-semibold text-slate-900 dark:text-slate-100">{formatAmount(estimatedSavings)}</p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{t('dashboard.estimatedSavingsDesc')}</p>
+            </div>
+          </div>
+        </SectionPanel>
 
         <div className="grid gap-6 lg:grid-cols-[1.55fr_0.95fr]">
           <div className="rounded-[26px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-[32px] sm:p-6">
@@ -323,6 +467,18 @@ export default function Page() {
                         </div>
                       ))}
                     </div>
+                    <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-800">
+                      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        {t('dashboard.budget')}
+                        <input
+                          type="number"
+                          value={selectedBudgetValue || ''}
+                          onChange={(event) => setCategoryBudget(selectedBudgetCategory, Number(event.target.value))}
+                          className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium normal-case tracking-normal text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                          placeholder="0"
+                        />
+                      </label>
+                    </div>
                   </>
                 )}
               </div>
@@ -346,6 +502,17 @@ export default function Page() {
                   <p className="mt-4 text-sm font-semibold text-slate-900 dark:text-slate-100">{t(category.labelKey)}</p>
                   <p className="mt-2 text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">{formatAmount(category.amount)}</p>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{category.percent}% {t('dashboard.ofTotal')}</p>
+                  {category.budget > 0 ? (
+                    <div className="mt-3">
+                      <div className="mb-2 flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+                        <span>{t('dashboard.budget')}</span>
+                        <span>{category.budgetPercent}%</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900">
+                        <div className={`h-full rounded-full ${category.amount > category.budget ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${category.budgetPercent}%` }} />
+                      </div>
+                    </div>
+                  ) : null}
                   {activeCategory === category.key ? (
                     <div className="mt-4 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-800 lg:hidden">
                       {category.breakdown.map((item) => (
@@ -395,13 +562,19 @@ export default function Page() {
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
-            {recentTransactions.map((item, index) => (
-              <div
-                key={item.id}
-                className={`flex-col gap-4 border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:p-5 ${
-                  index >= 4 ? 'hidden sm:flex' : 'flex'
-                } ${index < recentTransactions.length - 1 ? 'border-b' : ''}`}
-              >
+            {recentTransactions.length === 0 ? (
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('history.noTransactions')}</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{t('history.noTransactionsDesc')}</p>
+              </div>
+            ) : (
+              recentTransactions.map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`flex-col gap-4 border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:p-5 ${
+                    index >= 4 ? 'hidden sm:flex' : 'flex'
+                  } ${index < recentTransactions.length - 1 ? 'border-b' : ''}`}
+                >
                 <div className="flex min-w-0 items-center gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl shadow-sm dark:bg-slate-950">{item.icon || '•'}</div>
                   <div className="min-w-0">

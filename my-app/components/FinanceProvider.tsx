@@ -12,6 +12,7 @@ export type Transaction = {
   category: string
   categoryId?: string | null
   createdAt?: string
+  archivedAt?: string | null
   date: string
   amount: number
   type: 'income' | 'expense'
@@ -36,15 +37,19 @@ interface FinanceContextValue {
   investmentBase: string
   payday: string
   transactions: Transaction[]
+  archivedTransactions: Transaction[]
   goals: Goal[]
+  categoryBudgets: Record<string, number>
   setCurrency: (value: Currency) => void
   setIncome: (value: string) => void
   setBonus: (value: string) => void
   setInvestmentBase: (value: string) => void
   setPayday: (value: string) => void
+  setCategoryBudget: (category: string, amount: number) => void
   addTransaction: (transaction: Omit<Transaction, 'id' | 'icon'>) => void
   updateTransaction: (id: string, updates: Partial<Omit<Transaction, 'id' | 'icon'>>) => void
   deleteTransaction: (id: string) => void
+  restoreArchivedTransaction: (id: string) => void
   addGoal: (goal: Omit<Goal, 'id' | 'current' | 'color'>) => void
   updateGoal: (id: string, updates: Partial<Pick<Goal, 'name' | 'target' | 'deadline'>>) => void
   adjustGoal: (id: string, amount: number) => void
@@ -70,6 +75,7 @@ type DbTransaction = {
   type: 'income' | 'expense'
   transaction_date: string | null
   created_at: string | null
+  archived_at?: string | null
   categories: DbCategory | null
 }
 
@@ -84,6 +90,7 @@ type DbGoal = {
 
 const FinanceContext = createContext<FinanceContextValue | null>(null)
 const PROFILE_STORAGE_PREFIX = 'finleaf-profile-settings'
+const CATEGORY_BUDGETS_STORAGE_PREFIX = 'finleaf-category-budgets'
 const SKIPPED_MONTHLY_INCOME_PREFIX = 'finleaf-skipped-monthly-income'
 const SKIPPED_MONTHLY_INVESTMENT_PREFIX = 'finleaf-skipped-monthly-investment'
 
@@ -186,6 +193,10 @@ function getProfileStorageKey(userId: string) {
   return `${PROFILE_STORAGE_PREFIX}-${userId}`
 }
 
+function getCategoryBudgetsStorageKey(userId: string) {
+  return `${CATEGORY_BUDGETS_STORAGE_PREFIX}-${userId}`
+}
+
 function getSkippedMonthlyIncomeStorageKey(userId: string) {
   return `${SKIPPED_MONTHLY_INCOME_PREFIX}-${userId}`
 }
@@ -223,6 +234,38 @@ function saveProfileSettings(userId: string, settings: typeof defaultProfileSett
   }
 
   window.localStorage.setItem(getProfileStorageKey(userId), JSON.stringify(settings))
+}
+
+function getStoredCategoryBudgets(userId: string) {
+  if (typeof window === 'undefined') {
+    return {}
+  }
+
+  const saved = window.localStorage.getItem(getCategoryBudgetsStorageKey(userId))
+  if (!saved) {
+    return {}
+  }
+
+  try {
+    const parsed = JSON.parse(saved) as Record<string, unknown>
+    return Object.entries(parsed).reduce((budgets, [category, value]) => {
+      const amount = Number(value)
+      if (Number.isFinite(amount) && amount > 0) {
+        budgets[category] = amount
+      }
+      return budgets
+    }, {} as Record<string, number>)
+  } catch {
+    return {}
+  }
+}
+
+function saveCategoryBudgets(userId: string, budgets: Record<string, number>) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(getCategoryBudgetsStorageKey(userId), JSON.stringify(budgets))
 }
 
 function getScheduledIncomeDate(payday: string) {
@@ -334,6 +377,7 @@ function mapTransaction(row: DbTransaction): Transaction {
     category: categoryName,
     date: row.transaction_date ?? new Date().toISOString().split('T')[0],
     createdAt: row.created_at ?? undefined,
+    archivedAt: row.archived_at ?? null,
     amount: Number(row.amount),
     type: row.type,
     notes: row.notes ?? undefined,
@@ -376,7 +420,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [investmentBase, setInvestmentBaseState] = useState(defaultProfileSettings.investmentBase)
   const [payday, setPaydayState] = useState(defaultProfileSettings.payday)
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [archivedTransactions, setArchivedTransactions] = useState<Transaction[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
+  const [categoryBudgets, setCategoryBudgets] = useState<Record<string, number>>({})
   const [categories, setCategories] = useState<DbCategory[]>([])
 
   const loadFinanceData = useCallback(async (currentUser: User) => {
@@ -387,6 +433,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     setBonusState(defaultProfileSettings.bonus)
     setInvestmentBaseState(profileSettings.investmentBase)
     setPaydayState(profileSettings.payday)
+    setCategoryBudgets(getStoredCategoryBudgets(currentUser.id))
 
     const { error: archiveError } = await supabase
       .from('transactions')
@@ -409,10 +456,22 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       transactionsQuery.is('archived_at', null)
     }
 
-    const [settingsResult, categoriesResult, transactionsResult, goalsResult] = await Promise.all([
+    const archivedTransactionsQuery = supabase
+      .from('transactions')
+      .select('id,category_id,amount,description,notes,type,transaction_date,created_at,archived_at,categories(id,name,icon_light,icon_dark,color_light,color_dark)')
+      .eq('user_id', currentUser.id)
+      .order('transaction_date', { ascending: false })
+      .order('created_at', { ascending: false })
+
+    if (!archiveError) {
+      archivedTransactionsQuery.not('archived_at', 'is', null)
+    }
+
+    const [settingsResult, categoriesResult, transactionsResult, archivedTransactionsResult, goalsResult] = await Promise.all([
       supabase.from('user_settings').select('currency').eq('user_id', currentUser.id).maybeSingle(),
       supabase.from('categories').select('id,name,icon_light,icon_dark,color_light,color_dark').or(`user_id.eq.${currentUser.id},user_id.is.null`),
       transactionsQuery,
+      archivedTransactionsQuery,
       supabase
         .from('goals')
         .select('id,name,target_amount,current_amount,deadline,color_light')
@@ -434,6 +493,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
     setCategories(categoriesResult.data ?? [])
     setTransactions(((transactionsResult.data ?? []) as unknown as DbTransaction[]).map(mapTransaction))
+    setArchivedTransactions(archiveError ? [] : ((archivedTransactionsResult.data ?? []) as unknown as DbTransaction[]).map(mapTransaction))
     setGoals(((goalsResult.data ?? []) as DbGoal[]).map(mapGoal))
     setLoading(false)
   }, [])
@@ -451,7 +511,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         void loadFinanceData(currentUser)
       } else {
         setTransactions([])
+        setArchivedTransactions([])
         setGoals([])
+        setCategoryBudgets({})
         setCategories([])
         setLoading(false)
         if (pathname !== '/login' && pathname !== '/reset-password') {
@@ -470,7 +532,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         void loadFinanceData(currentUser)
       } else {
         setTransactions([])
+        setArchivedTransactions([])
         setGoals([])
+        setCategoryBudgets({})
         setCategories([])
         setCurrencyState(defaultCurrency)
         setIncomeState(defaultProfileSettings.income)
@@ -731,6 +795,21 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     persistProfileSettings({ payday: value })
   }
 
+  const setCategoryBudget = (category: string, amount: number) => {
+    if (!user) return
+
+    setCategoryBudgets((current) => {
+      const next = { ...current }
+      if (!Number.isFinite(amount) || amount <= 0) {
+        delete next[category]
+      } else {
+        next[category] = amount
+      }
+      saveCategoryBudgets(user.id, next)
+      return next
+    })
+  }
+
   const addTransaction = (transaction: Omit<Transaction, 'id' | 'icon'>) => {
     if (!user) return
 
@@ -844,6 +923,31 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       .then(({ error }) => {
         if (error && deletedTransaction) {
           setTransactions((current) => [deletedTransaction, ...current])
+        }
+      })
+  }
+
+  const restoreArchivedTransaction = (id: string) => {
+    if (!user) return
+
+    const restoredTransaction = archivedTransactions.find((transaction) => transaction.id === id)
+    if (!restoredTransaction) return
+
+    setArchivedTransactions((current) => current.filter((transaction) => transaction.id !== id))
+    setTransactions((current) => sortTransactionsNewestFirst([{ ...restoredTransaction, archivedAt: null }, ...current]))
+
+    void supabase
+      .from('transactions')
+      .update({
+        archived_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .then(({ error }) => {
+        if (error) {
+          setTransactions((current) => current.filter((transaction) => transaction.id !== id))
+          setArchivedTransactions((current) => sortTransactionsNewestFirst([restoredTransaction, ...current]))
         }
       })
   }
@@ -1024,15 +1128,19 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         investmentBase,
         payday,
         transactions: sortedTransactions,
+        archivedTransactions,
         goals,
+        categoryBudgets,
         setCurrency,
         setIncome,
         setBonus,
         setInvestmentBase,
         setPayday,
+        setCategoryBudget,
         addTransaction,
         updateTransaction,
         deleteTransaction,
+        restoreArchivedTransaction,
         addGoal,
         updateGoal,
         adjustGoal,
