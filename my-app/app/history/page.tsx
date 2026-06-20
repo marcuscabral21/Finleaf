@@ -317,19 +317,20 @@ export default function Page() {
                 <TransactionRow
                   key={transaction.id}
                   transaction={transaction}
-                transactionCategories={transactionCategories}
-                showArchived={showArchived}
-                isEditing={editingId === transaction.id}
-                editValues={editValues}
-                setEditValues={setEditValues}
-                formatAmount={formatAmount}
-                onEdit={() => handleEditClick(transaction.id)}
-                onSave={saveEdit}
-                onCancel={() => setEditingId(null)}
-                onDelete={() => deleteTransaction(transaction.id)}
-                onRestore={() => restoreArchivedTransaction(transaction.id)}
-              />
-            ))}
+                  transactionCategories={transactionCategories}
+                  showArchived={showArchived}
+                  isEditing={editingId === transaction.id}
+                  editValues={editValues}
+                  setEditValues={setEditValues}
+                  formatAmount={formatAmount}
+                  onEdit={() => handleEditClick(transaction.id)}
+                  onSave={saveEdit}
+                  onCancel={() => setEditingId(null)}
+                  onDelete={() => deleteTransaction(transaction.id)}
+                  onRestore={() => restoreArchivedTransaction(transaction.id)}
+                />
+              ))
+            )}
           </div>
         </div>
       </div>

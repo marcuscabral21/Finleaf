@@ -568,49 +568,51 @@ export default function Page() {
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{t('history.noTransactionsDesc')}</p>
               </div>
             ) : (
-              recentTransactions.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`flex-col gap-4 border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:p-5 ${
-                    index >= 4 ? 'hidden sm:flex' : 'flex'
-                  } ${index < recentTransactions.length - 1 ? 'border-b' : ''}`}
-                >
-                <div className="flex min-w-0 items-center gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl shadow-sm dark:bg-slate-950">{item.icon || '•'}</div>
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-slate-900 dark:text-slate-100">{t(getCategoryTranslationKey(item.category))}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-                      <span>{item.date}</span>
-                      <span className={item.type === 'expense' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}>
-                        {t(item.type === 'expense' ? 'history.csvExpense' : 'history.csvIncome')}
-                      </span>
+              recentTransactions.map((item, index) => {
+                const rowClasses = `flex-col gap-4 border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:p-5 ${
+                  index >= 4 ? 'hidden sm:flex' : 'flex'
+                } ${index < recentTransactions.length - 1 ? 'border-b' : ''}`
+
+                return (
+                  <div key={item.id} className={rowClasses}>
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl shadow-sm dark:bg-slate-950">{item.icon || '•'}</div>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-slate-900 dark:text-slate-100">{t(getCategoryTranslationKey(item.category))}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+                          <span>{item.date}</span>
+                          <span className={item.type === 'expense' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}>
+                            {t(item.type === 'expense' ? 'history.csvExpense' : 'history.csvIncome')}
+                          </span>
+                        </div>
+                        {item.notes ? <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{translateNote(item.notes)}</p> : null}
+                      </div>
                     </div>
-                    {item.notes ? <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{translateNote(item.notes)}</p> : null}
+                    <div className="flex items-center justify-between gap-3 sm:w-72">
+                      <p className={`shrink-0 text-lg font-semibold ${item.type === 'expense' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                        {item.type === 'expense' ? '-' : '+'} {formatAmount(item.amount)}
+                      </p>
+                      <div className="grid shrink-0 grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(item.id)}
+                          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                          {t('history.edit')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item.id)}
+                          className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-400"
+                        >
+                          {t('goals.remove')}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between gap-3 sm:w-72">
-                  <p className={`shrink-0 text-lg font-semibold ${item.type === 'expense' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                    {item.type === 'expense' ? '-' : '+'} {formatAmount(item.amount)}
-                  </p>
-                  <div className="grid shrink-0 grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(item.id)}
-                      className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800"
-                    >
-                      {t('history.edit')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(item.id)}
-                      className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-400"
-                    >
-                      {t('goals.remove')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                )
+              })
+            )}
           </div>
         </section>
 
