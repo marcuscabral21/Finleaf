@@ -98,8 +98,8 @@ export default function Page() {
   const today = useMemo(() => formatLocalDate(new Date()), [])
 
   const totalIncome = useMemo(
-    () => transactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
-    [transactions]
+    () => cycleTransactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0),
+    [cycleTransactions]
   )
 
   const cycleIncome = useMemo(
@@ -119,11 +119,11 @@ export default function Page() {
 
   const availableBalance = useMemo(
     () =>
-      transactions.reduce(
+      cycleTransactions.reduce(
         (sum, item) => sum + (item.type === 'income' ? item.amount : -item.amount),
         0
       ),
-    [transactions]
+    [cycleTransactions]
   )
 
   const daysSinceCycleStart = useMemo(
