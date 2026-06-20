@@ -96,7 +96,7 @@ export default function Page() {
   )
 
   function handleEditClick(transactionId: string) {
-    const transaction = transactions.find((item) => item.id === transactionId)
+    const transaction = visibleTransactions.find((item) => item.id === transactionId)
     if (!transaction) return
     setEditingId(transactionId)
     setEditValues({
@@ -110,6 +110,7 @@ export default function Page() {
 
   function saveEdit() {
     if (!editingId) return
+
     updateTransaction(editingId, {
       category: editValues.category,
       amount: Number(editValues.amount) || 0,
@@ -117,7 +118,9 @@ export default function Page() {
       type: editValues.type,
       notes: editValues.notes.trim() || undefined,
     })
+
     setEditingId(null)
+    setEditValues({ category: '', amount: '', date: '', type: 'expense', notes: '' })
   }
 
   function downloadCsv() {
