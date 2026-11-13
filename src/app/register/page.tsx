@@ -2,10 +2,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AuthCard } from "../auth/auth-card";
 import { RegisterForm } from "../auth/auth-form";
+import { isDeletedUserSessionError } from "@/lib/supabase/session";
 
 export default async function RegisterPage() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
+
+  if (isDeletedUserSessionError(error)) redirect("/auth/clear-session");
 
   if (error && error.name !== "AuthSessionMissingError") {
     throw new Error("Não foi possível verificar a sessão do Supabase.", {

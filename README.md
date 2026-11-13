@@ -24,11 +24,12 @@ da base de dados preparado para publicação na Vercel.
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sua-chave-publishable
    ```
 
-3. No Supabase, abra **SQL Editor**, execute o ficheiro
-   `supabase/migrations/20261112000000_initial_schema.sql` e confirme que a
-   migração terminou sem erros. A migração cria o perfil e as categorias
-   iniciais no registo, além de políticas RLS para isolar os dados de cada
-   utilizador.
+3. No Supabase, abra **SQL Editor**. Num projeto novo, execute as migrações em
+   `supabase/migrations` por ordem. Se a migração inicial e
+   `20261113000000_add_user_finance_state.sql` já foram aplicadas, execute apenas
+   `20261113000100_sync_income_settings_from_finance_state.sql`. Caso contrário,
+   aplique apenas as migrações que ainda faltam, sempre pela ordem indicada.
+   Não volte a executar migrações já aplicadas.
 
 4. Em **Authentication > URL Configuration**, permita os URLs de redirecionamento
    locais (`http://localhost:3000/auth/callback`) e os domínios de produção e
@@ -56,17 +57,34 @@ Os logótipos SVG estão em `public/logos`. O modo claro usa `BlackPlant.svg` co
 O componente `src/components/finleaf-logo.tsx` seleciona a combinação conforme
 o tema.
 
-O esquema SQL guarda montantes em cêntimos e inclui perfis, rendimento base e
-exceções mensais, categorias, movimentos (despesas, rendimentos e reembolsos),
-despesas recorrentes e respetivas exceções, objetivos/cofre de poupança,
-movimentos de poupança e orçamentos por categoria. O RPC
-`generate_monthly_recurring_expenses` gera os gastos fixos de um mês sem
-duplicações e ajusta dias inexistentes ao último dia do mês.
+O esquema SQL inicial define tabelas normalizadas para movimentos, rendimento,
+categorias, gastos recorrentes e poupança. O painel sincroniza o estado completo
+como JSONB em `user_finance_state`, uma linha por utilizador. O RPC
+`save_user_finance_state` usa revisão otimista para evitar sobrescrever
+alterações feitas noutro dispositivo; também atualiza `income_settings`
+atomicamente com o rendimento padrão e o dia de recebimento. A política RLS
+limita a leitura do estado JSONB à conta autenticada. O RPC
+`generate_monthly_recurring_expenses` continua disponível para geração de
+despesas recorrentes na base de dados.
 
-**Nota:** o painel financeiro existente ainda guarda os movimentos no
-armazenamento local do navegador; os registos não são ainda lidos/escritos nas
-tabelas Supabase. O esquema e a autenticação ficam preparados para essa próxima
-integração.
+**Armazenamento e privacidade:** os dados financeiros novos são enviados ao
+Supabase por HTTPS e guardados na linha JSONB do utilizador. A encriptação em
+repouso é gerida pelo Supabase; a aplicação não cifra cada campo. Os registos
+que já existiam no armazenamento local do navegador não são importados nem
+apagados. Confirme a configuração de encriptação em repouso do seu projeto
+Supabase antes de guardar dados reais. O ciclo mensal do painel começa no dia de
+recebimento configurado em **Definições** (individual para cada utilizador) e
+termina no dia anterior ao recebimento seguinte. Dias que não existam num mês,
+como o dia 31 em fevereiro, são ajustados ao último dia desse mês. O rendimento
+pode ser ajustado individualmente em cada ciclo, mantendo o rendimento padrão
+para os restantes. Os gastos fixos lançados num ciclo usam o dia mensal configurado,
+com ajuste para o último dia quando esse dia não existe no mês. A app regista
+automaticamente os pagamentos vencidos quando está aberta ou é reaberta e
+deduz os valores do saldo disponível; por ser uma versão local, não executa
+débitos bancários reais. Depósitos e levantamentos do cofre/metas aparecem como
+transferências nos movimentos, sem serem contabilizados como rendimento ou
+despesa.
+
 
 Use somente a chave publishable (ou a chave `anon` legada) no frontend. Nunca
 adicione a chave `service_role` a variáveis `NEXT_PUBLIC_*`, ao Git ou ao código

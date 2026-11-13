@@ -1,0 +1,157 @@
+{
+  "planHash": "edc53d2aea36b5e992e9387a4d2fc496cbf02f706a10497a7742d09391888510",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-11-13T09:55:22.7172268Z",
+  "retryCount": 0,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 13637,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "typecheck",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "",
+        "durationMs": 1838
+      },
+      {
+        "name": "lint",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E finleaf@0.1.0 lint\r\n\u003E eslint .\r\n\r\n",
+        "durationMs": 4402
+      },
+      {
+        "name": "build",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E finleaf@0.1.0 build\r\n\u003E next build\r\n\r\n\u25B2 Next.js 16.4.6 (Turbopack)\r\n- Environments: .env.local\r\n\u2713 Running next.config.ts took 27ms\r\n\r\n  Creating an optimized production build ...\r\n\u2713 Compiled successfully in 291ms\r\n  Running TypeScript ...\r\n  Finished TypeScript in 990ms ...\r\n  Collecting page data using 8 workers ...\r\n  Generating static pages using 8 workers (0/7) ...\r\n  Generating static pages using 8 workers (1/7) \r\n  Generating static pages using 8 workers (3/7) \r\n  Generating static pages using 8 workers (5/7) \r\n\u2713 Generating static pages using 8 workers (7/7) in 782ms\r\n  Finalizing page optimization ...\r\n\r\nRoute (app)\r\n\u250C \u0192 /\r\n\u251C \u25CB /_not-found\r\n\u251C \u0192 /auth/callback\r\n\u251C \u0192 /auth/clear-session\r\n\u251C \u0192 /login\r\n\u2514 \u0192 /register\r\n\r\n\r\n\u0192 Proxy (Middleware)\r\n\r\n\u25CB  (Static)   prerendered as static content\r\n\u0192  (Dynamic)  server-rendered on demand\r\n\r\n",
+        "durationMs": 4603
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E finleaf@0.1.0 test\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[46m RUN \u001B[49m\u001B[22m \u001B[36mv4.0.18 \u001B[39m\u001B[90mC:/Users/marcu/repos/source/Finleaf\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m src/lib/supabase/session.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 2\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/finance-periods.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[32m 3\u001B[2mms\u001B[22m\u001B[39m\r\n\r\n\u001B[2m Test Files \u001B[22m \u001B[1m\u001B[32m2 passed\u001B[39m\u001B[22m\u001B[90m (2)\u001B[39m\r\n\u001B[2m      Tests \u001B[22m \u001B[1m\u001B[32m6 passed\u001B[39m\u001B[22m\u001B[90m (6)\u001B[39m\r\n\u001B[2m   Start at \u001B[22m 09:55:22\r\n\u001B[2m   Duration \u001B[22m 260ms\u001B[2m (transform 155ms, setup 0ms, import 202ms, tests 5ms, environment 0ms)\u001B[22m\r\n\r\n",
+        "durationMs": 1044,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "package_json",
+          "testsTotal": 6,
+          "testsPassed": 6,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "login-route-200",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\u003Chtml lang=\u0022pt-PT\u0022\u003E\u003Chead\u003E\u003Cmeta charSet=\u0022utf-8\u0022/\u003E\u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022image\u0022 href=\u0022/logos/BlackPlant.svg\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022image\u0022 href=\u0022/logos/BlackFinleaf.svg\u0022/\u003E\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/_next/static/chunks/src_app_1sh4y9b1v-u5-._.css\u0022 data-precedence=\u0022next_static/chunks/src_app_1sh4y9b1v-u5-._.css\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022script\u0022 fetchPriority=\u0022low\u0022 href=\u0022/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0fb9-gqu7_t97._.js\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-dom_0grqycjrj6mju._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-67asdr9._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jmam7qwg.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_1amofcmz--cdp._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_client_1165-soo5tfpf._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_%40swc_helpers_cjs_1r9vbqwj2323d._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1anvha4rlo79g._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/turbopack-_11q0wbt2n0d9y._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1urspxgmkk327._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_20wefz_f1k6jn._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_07hyvwlr55asd._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/src_app_auth_0ya57kvg-n--t._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Ctitle\u003EFinleaf | Controlo de gastos\u003C/title\u003E\u003Cmeta name=\u0022description\u0022 content=\u0022Finleaf - sua aplica\u00E7\u00E3o financeira\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_build_polyfills_polyfill-nomodule.js\u0022 noModule=\u0022\u0022\u003E\u003C/script\u003E\u003C/head\u003E\u003Cbody\u003E\u003Cdiv hidden=\u0022\u0022\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003C/div\u003E\u003Cmain class=\u0022auth-page\u0022\u003E\u003Csection class=\u0022auth-card\u0022\u003E\u003Ca class=\u0022auth-brand\u0022 href=\u0022/\u0022\u003E\u003Cspan class=\u0022finleaf-logo finleaf-logo-large\u0022\u003E\u003Cimg alt=\u0022\u0022 aria-hidden=\u0022true\u0022 width=\u002244\u0022 height=\u002232\u0022 decoding=\u0022async\u0022 data-nimg=\u00221\u0022 class=\u0022finleaf-logo-plant\u0022 style=\u0022color:transparent\u0022 src=\u0022/logos/BlackPlant.svg\u0022/\u003E\u003Cimg alt=\u0022Finleaf\u0022 width=\u0022106\u0022 height=\u002242\u0022 decoding=\u0022async\u0022 data-nimg=\u00221\u0022 class=\u0022finleaf-logo-wordmark\u0022 style=\u0022color:transparent\u0022 src=\u0022/logos/BlackFinleaf.svg\u0022/\u003E\u003C/span\u003E\u003C/a\u003E\u003Cp class=\u0022auth-eyebrow\u0022\u003EFINAN\u00C7AS PESSOAIS\u003C/p\u003E\u003Ch1\u003EBem-vindo de volta\u003C/h1\u003E\u003Cp class=\u0022auth-description\u0022\u003EEntre na sua conta para acompanhar as suas finan\u00E7as.\u003C/p\u003E\u003Cform class=\u0022auth-form\u0022 action=\u0022\u0022 encType=\u0022multipart/form-data\u0022 method=\u0022POST\u0022\u003E\u003Cinput type=\u0022hidden\u0022 name=\u0022$ACTION_REF_1\u0022/\u003E\u003Cinput type=\u0022hidden\u0022 name=\u0022$ACTION_1:0\u0022 value=\u0022{\u0026quot;id\u0026quot;:\u0026quot;60f12fa996054fef2f1c382784e4fddee249b6d581\u0026quot;,\u0026quot;bound\u0026quot;:\u0026quot;$@1\u0026quot;}\u0022/\u003E\u003Cinput type=\u0022hidden\u0022 name=\u0022$ACTION_1:1\u0022 value=\u0022[{}]\u0022/\u003E\u003Cinput type=\u0022hidden\u0022 name=\u0022$ACTION_KEY\u0022 value=\u0022k72fc8d44b6911fe13f883a9a3eb74958\u0022/\u003E\u003Clabel\u003EEmail\u003Cinput type=\u0022email\u0022 autoComplete=\u0022email\u0022 required=\u0022\u0022 maxLength=\u0022254\u0022 name=\u0022email\u0022/\u003E\u003C/label\u003E\u003Clabel\u003EPalavra-passe\u003Cinput type=\u0022password\u0022 autoComplete=\u0022current-password\u0022 required=\u0022\u0022 name=\u0022password\u0022/\u003E\u003C/label\u003E\u003Cbutton class=\u0022auth-submit\u0022 type=\u0022submit\u0022\u003EEntrar\u003C/button\u003E\u003Cp class=\u0022auth-switch\u0022\u003EAinda n\u00E3o tem conta? \u003Ca href=\u0022/register\u0022\u003ECriar conta\u003C/a\u003E\u003C/p\u003E\u003C/form\u003E\u003C/section\u003E\u003C/main\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003Cscript id=\u0022_R_\u0022\u003Eself.__next_r=\u0022zTWaQlGgWOhljDF8iKIIB\u0022;var __nextHmrInitialVersion=\u002225\u0022;\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0fb9-gqu7_t97._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript\u003E(self.__next_f=self.__next_f||[]).push(\n\u2026[truncated]",
+        "durationMs": 45
+      }
+    ],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "install",
+          "--no-package-lock"
+        ],
+        "cwd": "C:\\Users\\marcu\\repos\\source\\Finleaf",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "typecheck",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npx.CMD",
+        "args": [
+          "tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:\\Users\\marcu\\repos\\source\\Finleaf",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "lint",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "lint"
+        ],
+        "cwd": "C:\\Users\\marcu\\repos\\source\\Finleaf",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "build",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "build"
+        ],
+        "cwd": "C:\\Users\\marcu\\repos\\source\\Finleaf",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "C:\\Users\\marcu\\repos\\source\\Finleaf",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "login-route-200",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "C:\\Users\\marcu\\repos\\source\\Finleaf",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}
