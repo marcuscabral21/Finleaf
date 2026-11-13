@@ -3,11 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { AuthCard } from "../auth/auth-card";
 import { LoginForm } from "../auth/auth-form";
 import { isDeletedUserSessionError } from "@/lib/supabase/session";
+import { getSafeInternalPath } from "@/lib/navigation";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string; next?: string }>;
 }) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
@@ -19,9 +20,9 @@ export default async function LoginPage({
       cause: error,
     });
   }
-  if (data.user) redirect("/");
-
-  const { message } = await searchParams;
+  const { message, next } = await searchParams;
+  const nextPath = getSafeInternalPath(next);
+  if (data.user) redirect(nextPath);
 
   return (
     <AuthCard
@@ -29,6 +30,7 @@ export default async function LoginPage({
       description="Entre na sua conta para acompanhar as suas finanças."
     >
       <LoginForm
+        nextPath={nextPath === "/" ? undefined : nextPath}
         message={
           message === "confirm-email"
             ? "Conta criada. Confirme o email antes de iniciar sessão."

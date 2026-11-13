@@ -949,6 +949,7 @@ td {
 .dark .filters input,
 .dark .filters select,
 .dark .settings-form input,
+.dark .toggle-row select,
 .dark .modal-form input,
 .dark .modal-form select,
 .dark .modal-form textarea {
@@ -959,6 +960,22 @@ td {
 
 .dark .settings-divider {
   border-color: #293d2d;
+}
+
+.toggle-row select {
+  min-height: 38px;
+  border: 1px solid #e7ebe6;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #374139;
+  font-size: 11px;
+}
+
+.data-note .button {
+  display: inline-block;
+  margin-top: 10px;
+  text-decoration: none;
 }
 
 @media (max-width: 1100px) {

@@ -6,11 +6,18 @@ import { signIn, signUp, type AuthState } from "./actions";
 
 const initialState: AuthState = {};
 
-export function LoginForm({ message }: { message?: string }) {
+export function LoginForm({
+  message,
+  nextPath,
+}: {
+  message?: string;
+  nextPath?: string;
+}) {
   const [state, action, pending] = useActionState(signIn, initialState);
 
   return (
     <form action={action} className="auth-form">
+      {nextPath && <input type="hidden" name="next" value={nextPath} />}
       {message && <p className="auth-message" role="status">{message}</p>}
       {state.error && <p className="auth-error" role="alert">{state.error}</p>}
       <label>

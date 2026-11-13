@@ -123,6 +123,39 @@
   font-weight: 700;
 }
 
+@media (prefers-color-scheme: dark) {
+  .auth-page {
+    --bg: #0c1710;
+    --paper: #142319;
+    --ink: #e8f1e9;
+    --muted: #a0b2a4;
+    --line: #293d2d;
+    --green: #4fc47a;
+    background:
+      radial-gradient(ellipse at 85% 15%, #193822 0, transparent 38%),
+      var(--bg);
+  }
+
+  .auth-card {
+    border-color: var(--line);
+    box-shadow: 0 24px 80px rgb(0 0 0 / 24%);
+  }
+
+  .auth-form input {
+    border-color: #314936;
+  }
+
+  .auth-error {
+    background: #422b27;
+    color: #ffb6a8;
+  }
+
+  .auth-message {
+    background: #203d27;
+    color: #a9e3b6;
+  }
+}
+
 .auth-error,
 .auth-message {
   margin: 0;

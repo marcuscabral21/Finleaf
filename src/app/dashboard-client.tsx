@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { signOut } from "./auth/actions";
 import { FinleafLogo } from "@/components/finleaf-logo";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,7 @@ import {
   periodStartForOffset,
   previousDate,
 } from "@/lib/finance-periods";
+import { resolveDarkMode, type ThemePreference } from "@/lib/color-scheme";
 
 type Category = { name: string; color: string };
 type Expense = { id: string; description: string; amount: number; date: string; category: string; note: string; type: "expense" | "income" | "transfer"; recurring?: boolean; fixedId?: string; transferDirection?: "to-savings" | "from-savings" };
@@ -21,10 +22,10 @@ type Fixed = { id: string; description: string; amount: number; category: string
 type Goal = { id: string; name: string; target: number; due: string; saved: number; moves?: { month: string; amount: number }[] };
 type SavingsMove = { month: string; amount: number };
 type FixedCharge = { fixedId: string; periodStart: string; date: string };
-type Data = { income: number; incomeByPeriod?: Record<string, number>; payday: number; paydayOverrides?: Record<string, string>; categories: Category[]; expenses: Expense[]; fixed: Fixed[]; fixedCharges?: FixedCharge[]; goals: Goal[]; savings: number; savingsMoves?: SavingsMove[]; dark: boolean };
+type Data = { income: number; incomeByPeriod?: Record<string, number>; payday: number; paydayOverrides?: Record<string, string>; categories: Category[]; expenses: Expense[]; fixed: Fixed[]; fixedCharges?: FixedCharge[]; goals: Goal[]; savings: number; savingsMoves?: SavingsMove[]; dark: boolean; theme: ThemePreference };
 
 const initial: Data = {
-  income: 0, payday: 25, savings: 0, dark: false,
+  income: 0, payday: 25, savings: 0, dark: false, theme: "system",
   categories: [
     { name: "Alimentação", color: "#7a9c70" }, { name: "Compras", color: "#d7a16c" },
     { name: "Saúde", color: "#d17872" }, { name: "Entretenimento", color: "#8576b7" },
@@ -33,11 +34,38 @@ const initial: Data = {
     { name: "Lazer", color: "#6aa88e" }, { name: "Outros", color: "#9b9b91" },
   ], expenses: [], fixed: [], goals: [],
 };
+
+const telegramBotUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
+  ?.trim()
+  .replace(/^@/, "");
+const telegramBotUrl = telegramBotUsername
+  && /^[A-Za-z0-9_]{5,32}$/.test(telegramBotUsername)
+  ? `https://t.me/${telegramBotUsername}`
+  : null;
+
+function subscribeToColorScheme(onChange: () => void) {
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  mediaQuery.addEventListener("change", onChange);
+  return () => mediaQuery.removeEventListener("change", onChange);
+}
+
+function getSystemDarkPreference() {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
 function normalizeFinanceData(raw: unknown): Data {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error("Os dados financeiros guardados no Supabase não são válidos.");
   }
   const parsed = { ...initial, ...raw } as Data;
+  const savedTheme = (raw as Record<string, unknown>).theme;
+  const theme: ThemePreference = savedTheme === "light" || savedTheme === "dark"
+    ? savedTheme
+    : savedTheme === "system"
+      ? "system"
+      : parsed.dark
+        ? "dark"
+        : "system";
   const paydayOverrides = parsed.paydayOverrides ?? {};
   const validDate = (value: string) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -69,6 +97,7 @@ function normalizeFinanceData(raw: unknown): Data {
   }
   return {
     ...parsed,
+    theme,
     incomeByPeriod: parsed.incomeByPeriod ?? {},
     paydayOverrides,
     fixedCharges: parsed.fixedCharges ?? [],
@@ -166,8 +195,14 @@ export default function DashboardClient({
 }) {
   const displayName = userName.trim() || "Utilizador";
   const avatarInitial = displayName.slice(0, 1).toUpperCase() || "U";
+  const systemPrefersDark = useSyncExternalStore(
+    subscribeToColorScheme,
+    getSystemDarkPreference,
+    () => false,
+  );
   const supabase = useMemo(() => createClient(), []);
   const [data, setDataState] = useState(() => normalizeFinanceData(initialFinanceData));
+  const isDark = resolveDarkMode(data.theme, systemPrefersDark);
   const [syncStatus, setSyncStatus] = useState<"saving" | "saved" | "error" | "conflict">("saving");
   const [greeting, setGreeting] = useState("Bom dia");
   const [notice, setNotice] = useState("");
@@ -541,8 +576,8 @@ export default function DashboardClient({
     showNotice("Montante devolvido ao saldo disponível.");
   };
 
-  return <main className={`app ${data.dark ? "dark" : ""}`}>
-    <aside className="sidebar"><Link className="brand" href="/"><FinleafLogo appearance={data.dark ? "dark" : "light"} /><span className="brand-caption">FINANÇAS PESSOAIS</span></Link>
+  return <main className={`app ${isDark ? "dark" : ""}`}>
+    <aside className="sidebar"><Link className="brand" href="/"><FinleafLogo appearance={isDark ? "dark" : "light"} /><span className="brand-caption">FINANÇAS PESSOAIS</span></Link>
       <div className="nav-label">MENU PRINCIPAL</div><nav aria-label="Navegação principal">{nav.map((n, i) => <button key={n} className={`nav-item ${tab === n ? "selected" : ""}`} onClick={() => setTab(n)}><span className="nav-icon">{["◫","↕","↻","◉","▥","⚙"][i]}</span>{n}{n === "Movimentos" && <span className="nav-count">{monthExpenses.length}</span>}</button>)}</nav>
       <div className="sidebar-bottom"><div className="help-card"><div className="help-icon">✦</div><b>Um passo de cada vez.</b><p>Pequenos hábitos criam grandes mudanças.</p></div><div className="profile"><div className="avatar">{avatarInitial}</div><div><b>{displayName}</b><small>{userEmail}</small></div></div></div>
     </aside>
@@ -590,7 +625,49 @@ export default function DashboardClient({
         <div className="category-settings">{data.categories.map(c=><label className="category-chip" key={c.name}><input type="color" value={c.color} onChange={e=>setData(d=>({...d,categories:d.categories.map(x=>x.name===c.name?{...x,color:e.target.value}:x)}))}/>{c.name}<button type="button" onClick={()=>setData(d=>({...d,categories:d.categories.filter(x=>x.name!==c.name)}))}>×</button></label>)}</div>
         <button className="button button-light" onClick={()=>{const name=window.prompt("Nome da nova categoria");if(name&&!data.categories.some(c=>c.name===name))setData(d=>({...d,categories:[...d.categories,{name,color:"#829a83"}]}))}}>＋ Adicionar categoria</button>
         <div className="settings-divider"/>
-        <label className="toggle-row">Modo escuro <input type="checkbox" checked={data.dark} onChange={e=>setData(d=>({...d,dark:e.target.checked}))}/></label>
+        <label className="toggle-row">Aparência
+          <select
+            value={data.theme}
+            onChange={(event) => {
+              const theme = event.target.value;
+              if (theme === "system" || theme === "light" || theme === "dark") {
+                setData((current) => ({
+                  ...current,
+                  theme,
+                  dark: theme === "dark",
+                }));
+              }
+            }}
+          >
+            <option value="system">Usar preferência do dispositivo</option>
+            <option value="light">Claro</option>
+            <option value="dark">Escuro</option>
+          </select>
+        </label>
+        <div className="settings-divider"/>
+        <div className="panel-heading">
+          <div>
+            <h2>Telegram</h2>
+            <p>Associe esta conta Finleaf ao bot para registar despesas no Telegram.</p>
+          </div>
+        </div>
+        <div className="data-note">
+          {telegramBotUrl ? (
+            <>
+              <p>Abra o bot e envie /start. Depois, siga o link para iniciar sessão e confirmar a associação.</p>
+              <a
+                className="button button-primary"
+                href={telegramBotUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir bot no Telegram ↗
+              </a>
+            </>
+          ) : (
+            <p>O bot ainda não está configurado neste site. Defina NEXT_PUBLIC_TELEGRAM_BOT_USERNAME com o nome público do bot e publique novamente.</p>
+          )}
+        </div>
         <div className="data-note"><b>Sincronização e privacidade</b><p>Os dados financeiros são guardados no Supabase como JSONB, numa linha protegida pelas políticas RLS da sua conta. O envio usa TLS e a encriptação em repouso é gerida pelo Supabase; a app não cifra cada campo. Os dados antigos deste navegador não foram importados nem apagados.</p></div>
       </section>}
       <footer className="footer">Feito para dar mais clareza ao seu dinheiro <span>·</span> Finleaf</footer>
@@ -623,7 +700,7 @@ function ExpenseTable({ expenses, categories, onEdit, onDelete }: { expenses: Ex
     const categoryColor = categories.find((category) => category.name === expense.category)?.color || "#999";
     return <tr key={expense.id}>
       <td><div className="transaction-cell"><span className="transaction-icon" style={{color:categoryColor}}>{expense.type==="income"||expense.transferDirection==="from-savings"?"↗":"↘"}</span><div><b>{expense.description}</b>{expense.note&&<small>{expense.note}</small>}</div></div></td>
-      <td><span className="category-label"><i style={{background:categoryColor}}/>{expense.category}</span></td>
+      <td><span className="category-label"><i style={{background:categoryColor}}/>{expense.category || "Sem categoria"}</span></td>
       <td>{new Date(`${expense.date}T12:00:00`).toLocaleDateString("pt-PT")}</td>
       <td><span className={`type-pill ${expense.type}`}>{expense.type==="income"?"Entrada":isTransfer?"Transferência":"Despesa"}</span></td>
       <td className={`align-right amount-cell ${isIncoming?"income-amount":""}`}>{isIncoming?"+":"−"}{money(expense.amount)}</td>

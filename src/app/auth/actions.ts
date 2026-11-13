@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getSafeInternalPath } from "@/lib/navigation";
 
 export type AuthState = {
   error?: string;
@@ -15,6 +16,7 @@ export async function signIn(
 ): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const nextPath = getSafeInternalPath(formData.get("next"));
 
   if (!email || !password) {
     return { error: "Indique o email e a palavra-passe." };
@@ -27,7 +29,7 @@ export async function signIn(
     return { error: "Não foi possível iniciar sessão. Verifique os seus dados." };
   }
 
-  redirect("/");
+  redirect(nextPath);
 }
 
 export async function signUp(

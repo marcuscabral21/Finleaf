@@ -24,12 +24,9 @@ da base de dados preparado para publicação na Vercel.
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sua-chave-publishable
    ```
 
-3. No Supabase, abra **SQL Editor**. Num projeto novo, execute as migrações em
-   `supabase/migrations` por ordem. Se a migração inicial e
-   `20261113000000_add_user_finance_state.sql` já foram aplicadas, execute apenas
-   `20261113000100_sync_income_settings_from_finance_state.sql`. Caso contrário,
-   aplique apenas as migrações que ainda faltam, sempre pela ordem indicada.
-   Não volte a executar migrações já aplicadas.
+3. No Supabase, abra **SQL Editor** e aplique apenas as migrações ainda em falta,
+   sempre pela ordem indicada em `supabase/migrations`. Não volte a executar
+   migrações já aplicadas.
 
 4. Em **Authentication > URL Configuration**, permita os URLs de redirecionamento
    locais (`http://localhost:3000/auth/callback`) e os domínios de produção e
@@ -56,6 +53,10 @@ Os logótipos SVG estão em `public/logos`. O modo claro usa `BlackPlant.svg` co
 `BlackFinleaf.svg`; o modo escuro usa `WhitePlant.svg` com `WhiteFinleaf.svg`.
 O componente `src/components/finleaf-logo.tsx` seleciona a combinação conforme
 o tema.
+
+Nas Definições, a aparência pode seguir a preferência do dispositivo ou ser
+definida manualmente como clara ou escura. As páginas de autenticação também
+seguem a preferência de esquema de cores do dispositivo.
 
 O esquema SQL inicial define tabelas normalizadas para movimentos, rendimento,
 categorias, gastos recorrentes e poupança. O painel sincroniza o estado completo
@@ -89,8 +90,34 @@ despesa.
 
 
 Use somente a chave publishable (ou a chave `anon` legada) no frontend. Nunca
-adicione a chave `service_role` a variáveis `NEXT_PUBLIC_*`, ao Git ou ao código
-do cliente.
+adicione a chave secreta do Supabase a variáveis `NEXT_PUBLIC_*`, ao Git ou ao
+código do cliente.
+
+## Bot do Telegram
+
+O fluxo do bot está preparado, mas só fica ativo depois de criar um bot no
+BotFather e configurar as variáveis de servidor em `.env.local` e no ambiente de
+produção:
+
+- `TELEGRAM_BOT_TOKEN`: token fornecido pelo BotFather.
+- `TELEGRAM_WEBHOOK_SECRET`: segredo aleatório composto por letras, números, `_`
+  ou `-`; use o mesmo ao configurar o webhook no Telegram.
+- `FINLEAF_SITE_URL`: URL pública HTTPS do Finleaf, sem caminho adicional.
+- `SUPABASE_SECRET_KEY`: chave secreta do projeto Supabase, apenas no servidor.
+- `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`: nome público do bot, sem o `@`; mostra
+  o botão para abrir o bot nas Definições do painel.
+
+Depois de aplicar também a migração
+`20261114000000_telegram_bot.sql`, configure o webhook do bot para
+`https://o-seu-dominio/api/telegram/webhook`, incluindo o segredo configurado.
+Não publique o token nem a chave secreta em código, frontend ou repositório.
+
+No chat privado, `/start` envia um link temporário. A pessoa inicia sessão no
+navegador e confirma a associação; o fuso horário desse navegador passa a
+determinar a data dos gastos. Depois, `/gasto` inicia o registo de descrição,
+valor e categoria opcional. Também existem `/cancelar` e `/desassociar`. Para
+atualizar os dados do painel depois de um registo no Telegram, recarregue a
+página se ela já estiver aberta.
 
 ## Publicação futura na Vercel
 
