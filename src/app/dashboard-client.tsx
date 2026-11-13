@@ -21,7 +21,7 @@ type Fixed = { id: string; description: string; amount: number; category: string
 type Goal = { id: string; name: string; target: number; due: string; saved: number; moves?: { month: string; amount: number }[] };
 type SavingsMove = { month: string; amount: number };
 type FixedCharge = { fixedId: string; periodStart: string; date: string };
-type Data = { income: number; incomeByPeriod?: Record<string, number>; payday: number; categories: Category[]; expenses: Expense[]; fixed: Fixed[]; fixedCharges?: FixedCharge[]; goals: Goal[]; savings: number; savingsMoves?: SavingsMove[]; dark: boolean };
+type Data = { income: number; incomeByPeriod?: Record<string, number>; payday: number; paydayOverrides?: Record<string, string>; categories: Category[]; expenses: Expense[]; fixed: Fixed[]; fixedCharges?: FixedCharge[]; goals: Goal[]; savings: number; savingsMoves?: SavingsMove[]; dark: boolean };
 
 const initial: Data = {
   income: 0, payday: 25, savings: 0, dark: false,
@@ -38,6 +38,12 @@ function normalizeFinanceData(raw: unknown): Data {
     throw new Error("Os dados financeiros guardados no Supabase não são válidos.");
   }
   const parsed = { ...initial, ...raw } as Data;
+  const paydayOverrides = parsed.paydayOverrides ?? {};
+  const validDate = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const timestamp = Date.parse(`${value}T00:00:00Z`);
+    return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === value;
+  };
   if (
     !Number.isSafeInteger(parsed.income)
     || !Number.isInteger(parsed.payday)
@@ -49,12 +55,22 @@ function normalizeFinanceData(raw: unknown): Data {
     || !Array.isArray(parsed.expenses)
     || !Array.isArray(parsed.fixed)
     || !Array.isArray(parsed.goals)
+    || typeof paydayOverrides !== "object"
+    || paydayOverrides === null
+    || Array.isArray(paydayOverrides)
+    || Object.entries(paydayOverrides).some(([period, date]) => (
+      !/^\d{4}-\d{2}$/.test(period)
+      || typeof date !== "string"
+      || date.slice(0, 7) !== period
+      || !validDate(date)
+    ))
   ) {
     throw new Error("Os dados financeiros guardados no Supabase têm um formato inválido.");
   }
   return {
     ...parsed,
     incomeByPeriod: parsed.incomeByPeriod ?? {},
+    paydayOverrides,
     fixedCharges: parsed.fixedCharges ?? [],
     savingsMoves: parsed.savingsMoves ?? [],
   };
@@ -136,21 +152,24 @@ function Donut({
 }
 
 export default function DashboardClient({
+  userName,
   userEmail,
   todayDate,
   initialFinanceData,
   initialRevision,
 }: {
+  userName: string;
   userEmail: string;
   todayDate: string;
   initialFinanceData: unknown;
   initialRevision: number;
 }) {
-  const displayName = userEmail.split("@")[0] || "Utilizador";
+  const displayName = userName.trim() || "Utilizador";
   const avatarInitial = displayName.slice(0, 1).toUpperCase() || "U";
   const supabase = useMemo(() => createClient(), []);
   const [data, setDataState] = useState(() => normalizeFinanceData(initialFinanceData));
   const [syncStatus, setSyncStatus] = useState<"saving" | "saved" | "error" | "conflict">("saving");
+  const [greeting, setGreeting] = useState("Bom dia");
   const [notice, setNotice] = useState("");
   const showNotice = useCallback((message: string) => {
     setNotice(message);
@@ -219,6 +238,8 @@ export default function DashboardClient({
       const current = new Date();
       const localDate = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
       setLiveDate(localDate);
+      const hour = current.getHours();
+      setGreeting(hour >= 5 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 19 ? "Boa tarde" : "Boa noite");
     };
 
     updateDate();
@@ -229,7 +250,7 @@ export default function DashboardClient({
   const effectiveTimestamp = new Date(`${effectiveToday}T12:00:00`).getTime();
   const today = () => effectiveToday;
   const [monthOffset, setMonthOffset] = useState(0);
-  const month = periodStartForOffset(effectiveToday, data.payday, monthOffset);
+  const month = periodStartForOffset(effectiveToday, data.payday, monthOffset, data.paydayOverrides);
   const [tab, setTab] = useState("Visão geral");
   const [modal, setModal] = useState("");
   const [filter, setFilter] = useState("");
@@ -237,7 +258,7 @@ export default function DashboardClient({
   const [editing, setEditing] = useState<Expense | null>(null);
   const [editingFixed, setEditingFixed] = useState<Fixed | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const monthExpenses = useMemo(() => data.expenses.filter((e) => periodStartForDate(e.date, data.payday) === month), [data.expenses, data.payday, month]);
+  const monthExpenses = useMemo(() => data.expenses.filter((e) => periodStartForDate(e.date, data.payday, data.paydayOverrides) === month), [data.expenses, data.payday, data.paydayOverrides, month]);
   const spending = monthExpenses.filter((e) => e.type === "expense").reduce((a, e) => a + e.amount, 0);
   const extras = monthExpenses.filter((e) => e.type === "income").reduce((a, e) => a + e.amount, 0);
   const fixedTotal = data.fixed.filter((fixed) => fixed.active).reduce((total, fixed) => total + fixed.amount, 0);
@@ -248,7 +269,12 @@ export default function DashboardClient({
     + (data.savingsMoves || []).filter(isSelectedPeriod).reduce((sum, move) => sum + move.amount, 0);
   const balance = income - spending - monthSavings;
   const byCategory = Object.fromEntries(data.categories.map((c) => [c.name, monthExpenses.filter((e) => e.category === c.name && e.type === "expense").reduce((a, e) => a + e.amount, 0)]));
-  const cycleEnd = previousDate(periodStartForOffset(month, data.payday, 1));
+  const cycleEnd = previousDate(periodStartForOffset(month, data.payday, 1, data.paydayOverrides));
+  const currentCycleStart = periodStartForDate(effectiveToday, data.payday, data.paydayOverrides);
+  const maxReceivedDate = month === currentCycleStart ? effectiveToday : cycleEnd;
+  const defaultReceivedDate = month === currentCycleStart
+    ? data.paydayOverrides?.[monthKey(month)] ?? effectiveToday
+    : data.paydayOverrides?.[monthKey(month)] ?? month;
   const defaultCycleDate = effectiveToday < month ? month : effectiveToday > cycleEnd ? cycleEnd : effectiveToday;
   useEffect(() => {
     const processedCharges: FixedCharge[] = [];
@@ -257,16 +283,16 @@ export default function DashboardClient({
     for (const fixed of data.fixed) {
       if (!fixed.active) continue;
 
-      const startDate = fixed.startDate ?? periodStartForDate(effectiveToday, data.payday);
-      for (const date of dueFixedDatesFrom(startDate, fixed.day, data.payday, effectiveToday)) {
-        const periodStart = periodStartForDate(date, data.payday);
+      const startDate = fixed.startDate ?? periodStartForDate(effectiveToday, data.payday, data.paydayOverrides);
+      for (const date of dueFixedDatesFrom(startDate, fixed.day, data.payday, effectiveToday, data.paydayOverrides)) {
+        const periodStart = periodStartForDate(date, data.payday, data.paydayOverrides);
         const alreadyProcessed = data.fixedCharges?.some(
           (charge) => charge.fixedId === fixed.id && charge.periodStart === periodStart,
         );
         if (alreadyProcessed) continue;
 
         const existingExpense = data.expenses.some((expense) => (
-          periodStartForDate(expense.date, data.payday) === periodStart
+          periodStartForDate(expense.date, data.payday, data.paydayOverrides) === periodStart
           && (
             expense.fixedId === fixed.id
             || (!expense.fixedId && expense.recurring && expense.description === fixed.description)
@@ -302,7 +328,8 @@ export default function DashboardClient({
         const chargesToAdd = newExpenses.filter(
           (expense) => !current.expenses.some(
             (saved) => saved.fixedId === expense.fixedId
-              && periodStartForDate(saved.date, current.payday) === periodStartForDate(expense.date, current.payday),
+              && periodStartForDate(saved.date, current.payday, current.paydayOverrides)
+                === periodStartForDate(expense.date, current.payday, current.paydayOverrides),
           ),
         );
         return {
@@ -313,7 +340,7 @@ export default function DashboardClient({
       });
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [data.expenses, data.fixed, data.fixedCharges, data.payday, effectiveToday, setData]);
+  }, [data.expenses, data.fixed, data.fixedCharges, data.payday, data.paydayOverrides, effectiveToday, setData]);
   const saveExpense = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); const fd = new FormData(event.currentTarget); const amount = Math.round(Number(fd.get("amount")) * 100);
     const entry: Expense = { id: editing?.id || newId(), description: String(fd.get("description")).trim(), amount, date: String(fd.get("date")), category: String(fd.get("category")), note: String(fd.get("note") || ""), type: fd.get("type") === "income" ? "income" : "expense" };
@@ -341,12 +368,66 @@ export default function DashboardClient({
     setEditingFixed(null);
     showNotice(editingFixed ? "Gasto fixo atualizado." : "Gasto fixo criado.");
   };
+  const saveIncome = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const amount = Math.round(Number(formData.get("amount")) * 100);
+    const bonus = Math.round(Number(formData.get("extra")) * 100);
+    const bonusDate = String(formData.get("date") || today());
+    const receivedDate = String(formData.get("receivedDate") || "");
+
+    if (receivedDate < month || receivedDate > maxReceivedDate) {
+      showNotice(`A data de recebimento deve estar no ciclo ${cycleRange(month, data.payday, data.paydayOverrides)}.`);
+      return;
+    }
+
+    const paydayOverrides = {
+      ...data.paydayOverrides,
+      [monthKey(receivedDate)]: receivedDate,
+    };
+
+    if (
+      bonus > 0
+      && periodStartForDate(bonusDate, data.payday, paydayOverrides) !== receivedDate
+    ) {
+      showNotice(`A data do rendimento extra deve estar no ciclo ${cycleRange(receivedDate, data.payday, paydayOverrides)}.`);
+      return;
+    }
+
+    setData((current) => {
+      const incomeByPeriod = { ...(current.incomeByPeriod || {}), [receivedDate]: amount };
+      const expenses = current.expenses.filter((expense) => !(
+        expense.category === "Outros"
+        && expense.description === "Ajuste de rendimento"
+        && periodStartForDate(expense.date, current.payday, paydayOverrides) === receivedDate
+      ));
+
+      return {
+        ...current,
+        paydayOverrides,
+        incomeByPeriod,
+        expenses: bonus > 0
+          ? [{
+            id: newId(),
+            description: "Rendimento extra",
+            amount: bonus,
+            date: bonusDate,
+            category: "Outros",
+            note: "Rendimento extra do mês",
+            type: "income" as const,
+          }, ...expenses]
+          : expenses,
+      };
+    });
+    setModal("");
+    showNotice("Rendimento e data de recebimento deste ciclo atualizados.");
+  };
   const saveGoal = (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); const fd = new FormData(event.currentTarget); const item: Goal = { id: newId(), name: String(fd.get("name")), target: Math.round(Number(fd.get("target")) * 100), due: String(fd.get("due")), saved: 0 }; setData((d) => ({ ...d, goals: [item, ...d.goals] })); setModal(""); showNotice("Meta de poupança criada."); };
   const filtered = monthExpenses.filter((e) => (!filter || e.category === filter) && (!search || `${e.description} ${e.note}`.toLowerCase().includes(search.toLowerCase()))).sort((a,b) => b.date.localeCompare(a.date));
-  const shiftMonth = (n: number) => setMonthOffset((offset) => offset + n);
+  const shiftMonth = (n: number) => setMonthOffset((offset) => Math.min(0, offset + n));
   const nav = ["Visão geral", "Movimentos", "Gastos fixos", "Poupança", "Histórico", "Definições"];
   const isCurrentCycle = () => {
-    if (month === periodStartForDate(effectiveToday, data.payday)) return true;
+    if (month === periodStartForDate(effectiveToday, data.payday, data.paydayOverrides)) return true;
     showNotice("Volte ao ciclo atual para registar uma transferência de poupança.");
     return false;
   };
@@ -467,7 +548,7 @@ export default function DashboardClient({
     </aside>
     <section className="main-area">
       <header className="topbar">
-        <div><div className="breadcrumb">Finleaf <span>/</span> {tab}</div><h1>{tab === "Visão geral" ? `Bom dia, ${displayName}` : tab}</h1></div>
+        <div><div className="breadcrumb">Finleaf <span>/</span> {tab}</div><h1>{tab === "Visão geral" ? `${greeting}, ${displayName}` : tab}</h1></div>
         <div className="header-actions">
           <div className={`sync-status ${syncStatus}`} role="status" aria-live="polite" aria-label={syncStatus === "saved" ? "Dados guardados" : syncStatus === "saving" ? "A guardar dados" : syncStatus === "conflict" ? "Conflito de dados" : "Falha ao guardar dados"} title={syncStatus === "saved" ? "Dados guardados" : syncStatus === "saving" ? "A guardar dados" : syncStatus === "conflict" ? "Conflito de dados" : "Falha ao guardar dados"}>
             <i aria-hidden="true">{syncStatus === "saved" ? "✓" : syncStatus === "saving" ? "↻" : "!"}</i>
@@ -480,7 +561,7 @@ export default function DashboardClient({
         </div>
       </header>
       <div className="content">
-      <div className="month-row"><div><span className="muted-label">O SEU MÊS</span><div className="month-select"><button onClick={() => shiftMonth(-1)} aria-label="Mês anterior">‹</button><b>{monthName(month)}</b><button onClick={() => shiftMonth(1)} aria-label="Mês seguinte">›</button></div><small>Ciclo: {cycleRange(month, data.payday)}</small></div><div className="quick-actions"><button className="button button-light" onClick={() => { setEditing(null); setEditingFixed(null); setModal("expense"); }}>＋ Novo movimento</button><button className="button button-primary" onClick={() => {setEditingFixed(null);setModal("fixed")}}>＋ Gasto fixo</button></div></div>
+      <div className="month-row"><div><span className="muted-label">O SEU MÊS</span><div className="month-select"><button onClick={() => shiftMonth(-1)} aria-label="Mês anterior">‹</button><b>{monthName(month)}</b><button onClick={() => shiftMonth(1)} aria-label="Mês seguinte" disabled={monthOffset >= 0}>›</button></div><small>Ciclo: {cycleRange(month, data.payday, data.paydayOverrides)}</small></div><div className="quick-actions"><button className="button button-light" onClick={() => { setEditing(null); setEditingFixed(null); setModal("expense"); }}>＋ Novo movimento</button><button className="button button-primary" onClick={() => {setEditingFixed(null);setModal("fixed")}}>＋ Gasto fixo</button></div></div>
       {(tab === "Visão geral" || tab === "Histórico") && <><section className="summary-grid">
         <article className="summary-card"><div className="summary-head"><span>Rendimento do ciclo</span><i className="summary-icon green">↗</i></div><strong>{money(income)}</strong><div className="summary-foot"><span>{data.incomeByPeriod?.[month] !== undefined ? "Valor ajustado" : `Padrão · dia ${data.payday}`}</span><button onClick={() => setModal("income")}>Ajustar</button></div></article>
         <article className="summary-card"><div className="summary-head"><span>Total gasto</span><i className="summary-icon orange">↙</i></div><strong>{money(spending)}</strong><div className="summary-foot"><span>{monthExpenses.filter(e=>e.type==="expense").length} despesas este mês</span><span className="neutral-pill">{income ? Math.round(spending/income*100) : 0}% do rendimento</span></div></article>
@@ -494,7 +575,7 @@ export default function DashboardClient({
       {tab === "Movimentos" && <section className="panel list-panel"><div className="panel-heading"><div><h2>Todos os movimentos</h2><p>Consulte, filtre e atualize as suas despesas e entradas.</p></div><button className="button button-primary" onClick={()=>{setEditing(null);setModal("expense")}}>＋ Novo movimento</button></div><div className="filters"><input placeholder="Pesquisar descrição ou nota…" value={search} onChange={e=>setSearch(e.target.value)}/><select value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Todas as categorias</option>{data.categories.map(c=><option key={c.name}>{c.name}</option>)}</select><button className="button button-light" onClick={()=>{const csv=["data,descricao,tipo,categoria,valor,nota",...filtered.map(e=>`${e.date},${e.description},${e.type},${e.category},${(e.amount/100).toFixed(2)},${e.note}`)].join("\n"); const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv"}));a.download=`finleaf-${month}.csv`;a.click();URL.revokeObjectURL(a.href);}}>Exportar CSV ↓</button></div><ExpenseTable expenses={filtered} categories={data.categories} onEdit={(e)=>{setEditing(e);setModal("expense")}} onDelete={(id)=>setData(d=>({...d,expenses:d.expenses.filter(e=>e.id!==id)}))}/></section>}
       {tab === "Gastos fixos" && <section className="panel list-panel"><div className="panel-heading"><div><h2>Gastos fixos</h2><p>A app lança os pagamentos na data indicada quando está aberta ou quando é reaberta depois do vencimento.</p></div><button className="button button-primary" onClick={()=>{setEditingFixed(null);setModal("fixed")}}>＋ Novo gasto fixo</button></div>{data.fixed.length===0?<Empty title="Ainda não tem gastos fixos" text="Adicione pagamentos como renda, internet ou ginásio." action={()=>{setEditingFixed(null);setModal("fixed")}}/>:<div className="fixed-list">{data.fixed.map(f=><div className="fixed-row" key={f.id}><div className="category-dot" style={{background:data.categories.find(c=>c.name===f.category)?.color}}/><div className="fixed-name"><b>{f.description}</b><span>{f.category} · Dia {f.day} de cada mês · cobrança no ciclo {shortDate(fixedDueDateForPeriod(month,f.day))}</span></div><b>{money(f.amount)}<small> / mês</small></b><span className={`state ${f.active?"active":"paused"}`}>{f.active?"Ativo":"Pausado"}</span><button className="text-button" onClick={()=>{setEditingFixed(f);setModal("fixed")}}>Editar</button><button className="text-button" onClick={()=>setData(d=>({...d,fixed:d.fixed.map(x=>x.id===f.id?{...x,active:!x.active,startDate:today()}:x)}))}>{f.active?"Pausar":"Retomar"}</button><button className="text-button danger-text" onClick={()=>setData(d=>({...d,fixed:d.fixed.filter(x=>x.id!==f.id)}))}>Terminar</button></div>)}</div>}</section>}
       {tab === "Poupança" && <><section className="summary-grid savings-summary"><article className="summary-card"><div className="summary-head"><span>Saldo do cofre</span><i className="summary-icon green">◉</i></div><strong>{money(data.savings+data.goals.reduce((a,g)=>a+g.saved,0))}</strong><div className="summary-foot"><span>Saldo total guardado</span><span className="neutral-pill">Cofre + metas</span></div></article><article className="summary-card"><div className="summary-head"><span>Metas ativas</span><i className="summary-icon purple">◎</i></div><strong>{data.goals.length}</strong><div className="summary-foot"><span>Objetivos em curso</span><button onClick={()=>setModal("goal")}>＋ Nova meta</button></div></article></section><section className="panel list-panel"><div className="panel-heading"><div><h2>As minhas metas</h2><p>Acompanhe o progresso e planeie a próxima conquista.</p></div><button className="button button-primary" onClick={()=>setModal("goal")}>＋ Criar meta</button></div>{data.goals.length===0?<Empty title="Ainda não criou metas" text="Defina um objetivo e veja quanto precisa de poupar por mês." action={()=>setModal("goal")}/>:<div className="goals-grid">{data.goals.map(g=>{const months=Math.max(1,Math.ceil((new Date(g.due).getTime()-effectiveTimestamp)/(30.44*86400000)));const pct=Math.min(100,Math.round(g.saved/g.target*100));return <article className="goal-card" key={g.id}><div className="goal-top"><span className="goal-symbol">✦</span><button className="text-button danger-text" onClick={()=>setData(d=>({...d,goals:d.goals.filter(x=>x.id!==g.id)}))}>Remover</button></div><h3>{g.name}</h3><p>Meta até {new Date(`${g.due}T12:00:00`).toLocaleDateString("pt-PT")}</p><div className="goal-values"><b>{money(g.saved)}</b><span>de {money(g.target)}</span></div><div className="progress-track"><div style={{width:`${pct}%`}}/></div><div className="goal-foot"><span>{pct}% alcançado</span><span>{money(Math.ceil(Math.max(0,g.target-g.saved)/months))}/mês para atingir</span></div><div className="goal-actions"><button className="button button-light" onClick={()=>addToGoal(g)}>＋ Guardar</button><button className="button button-light" onClick={()=>withdrawFromGoal(g)} disabled={g.saved<=0}>− Devolver ao saldo</button></div></article>})}</div>}</section><section className="panel list-panel"><div className="panel-heading"><div><h2>Cofre sem objetivo</h2><p>Guarde dinheiro sem o associar a uma meta.</p></div><span className="coffer-total">{money(data.savings)}</span></div><div className="quick-actions"><button className="button button-primary" onClick={addToCoffer}>＋ Adicionar dinheiro</button><button className="button button-light" onClick={withdrawFromCoffer} disabled={data.savings<=0}>− Devolver ao saldo</button></div></section></>}
-      {tab === "Histórico" && <><section className="panel history-panel"><div className="panel-heading"><div><h2>Evolução mensal</h2><p>Despesas e rendimento nos últimos seis ciclos.</p></div><span className="tiny-badge">Últimos 6 ciclos</span></div><HistoryChart expenses={data.expenses} income={data.income} incomeByPeriod={data.incomeByPeriod} payday={data.payday} todayDate={effectiveToday}/></section><section className="panel list-panel"><div className="panel-heading"><div><h2>Resumo do mês selecionado</h2><p>{monthName(month)} · {cycleRange(month, data.payday)}</p></div></div><div className="history-stats"><div><span>Rendimento</span><b>{money(income)}</b></div><div><span>Despesas</span><b>{money(spending)}</b></div><div><span>Saldo final</span><b className={balance<0?"negative":""}>{money(balance)}</b></div></div><button className="button button-light" onClick={()=>shiftMonth(-1)}>← Mês anterior</button><button className="button button-light" onClick={()=>shiftMonth(1)}>Mês seguinte →</button></section></>}
+      {tab === "Histórico" && <><section className="panel history-panel"><div className="panel-heading"><div><h2>Evolução mensal</h2><p>Despesas e rendimento nos últimos seis ciclos.</p></div><span className="tiny-badge">Últimos 6 ciclos</span></div><HistoryChart expenses={data.expenses} income={data.income} incomeByPeriod={data.incomeByPeriod} payday={data.payday} paydayOverrides={data.paydayOverrides} todayDate={effectiveToday}/></section><section className="panel list-panel"><div className="panel-heading"><div><h2>Resumo do mês selecionado</h2><p>{monthName(month)} · {cycleRange(month, data.payday, data.paydayOverrides)}</p></div></div><div className="history-stats"><div><span>Rendimento</span><b>{money(income)}</b></div><div><span>Despesas</span><b>{money(spending)}</b></div><div><span>Saldo final</span><b className={balance<0?"negative":""}>{money(balance)}</b></div></div><button className="button button-light" onClick={()=>shiftMonth(-1)}>← Mês anterior</button><button className="button button-light" onClick={()=>shiftMonth(1)} disabled={monthOffset >= 0}>Mês seguinte →</button></section></>}
       {tab === "Definições" && <section className="panel list-panel">
         <div className="panel-heading"><div><h2>Preferências</h2><p>Configure o seu rendimento, categorias e aparência.</p></div></div>
         <form className="settings-form" onSubmit={e=>{e.preventDefault();const fd=new FormData(e.currentTarget);setData(d=>({...d,income:Math.round(Number(fd.get("income"))*100),payday:Number(fd.get("payday"))}));showNotice("Preferências guardadas.")}}>
@@ -518,7 +599,18 @@ export default function DashboardClient({
       {modal==="expense"&&<form onSubmit={saveExpense} className="modal-form"><label>Tipo de movimento<select name="type" defaultValue={editing?.type||"expense"}><option value="expense">Despesa</option><option value="income">Entrada ou reembolso</option></select></label><div className="form-row"><label>Valor (€)<input name="amount" type="number" step="0.01" min="0.01" required defaultValue={editing?(editing.amount/100).toFixed(2):""}/></label><label>Data<input name="date" type="date" required defaultValue={editing?.date||today()}/></label></div><label>Descrição<input name="description" placeholder="Ex.: Supermercado" required defaultValue={editing?.description||""}/></label><label>Categoria<select name="category" defaultValue={editing?.category||data.categories[0]?.name}>{data.categories.map(c=><option key={c.name}>{c.name}</option>)}</select></label><label>Nota (opcional)<textarea name="note" rows={2} placeholder="Adicione um detalhe" defaultValue={editing?.note||""}/></label><div className="modal-actions"><button type="button" className="button button-light" onClick={()=>{setModal("");setEditing(null)}}>Cancelar</button><button className="button button-primary">Guardar movimento</button></div></form>}
       {modal==="fixed"&&<form key={editingFixed?.id ?? "new-fixed"} onSubmit={saveFixed} className="modal-form"><label>Descrição<input name="description" placeholder="Ex.: Internet" required defaultValue={editingFixed?.description ?? ""}/></label><div className="form-row"><label>Valor mensal (€)<input name="amount" type="number" step="0.01" min="0.01" required defaultValue={editingFixed ? (editingFixed.amount/100).toFixed(2) : ""}/></label><label>Dia de cobrança<input name="day" type="number" min="1" max="31" defaultValue={editingFixed?.day ?? 1} required/></label></div><label>Categoria<select name="category" defaultValue={editingFixed?.category ?? data.categories[0]?.name}>{data.categories.map(c=><option key={c.name}>{c.name}</option>)}</select></label><p className="form-hint">A app regista o movimento na data indicada quando está aberta ou é reaberta após o vencimento. O valor reduz o saldo disponível. Os dias 29–31 ajustam-se ao último dia do mês quando necessário.</p><div className="modal-actions"><button type="button" className="button button-light" onClick={()=>{setModal("");setEditingFixed(null)}}>Cancelar</button><button className="button button-primary">{editingFixed?"Guardar alterações":"Criar gasto fixo"}</button></div></form>}
       {modal==="goal"&&<form onSubmit={saveGoal} className="modal-form"><label>Nome da meta<input name="name" placeholder="Ex.: Viagem de verão" required/></label><div className="form-row"><label>Valor alvo (€)<input name="target" type="number" step="0.01" min="0.01" required/></label><label>Data limite<input name="due" type="date" min={today()} required/></label></div><div className="modal-actions"><button type="button" className="button button-light" onClick={()=>setModal("")}>Cancelar</button><button className="button button-primary">Criar meta</button></div></form>}
-      {modal==="income"&&<form className="modal-form" onSubmit={e=>{e.preventDefault();const fd=new FormData(e.currentTarget);const amount=Math.round(Number(fd.get("amount"))*100);const bonus=Math.round(Number(fd.get("extra"))*100);const bonusDate=String(fd.get("date")||today());if(bonus>0&&periodStartForDate(bonusDate,data.payday)!==month){showNotice(`A data do rendimento extra deve estar no ciclo ${cycleRange(month,data.payday)}.`);return}setData(d=>{const incomeByPeriod={...(d.incomeByPeriod||{}),[month]:amount};const expenses=d.expenses.filter(x=>!(x.category==="Outros"&&x.description==="Ajuste de rendimento"&&periodStartForDate(x.date,d.payday)===month));return {...d,incomeByPeriod,expenses:bonus>0?[{id:newId(),description:"Rendimento extra",amount:bonus,date:bonusDate,category:"Outros",note:"Rendimento extra do mês",type:"income"},...expenses]:expenses}});setModal("");showNotice("Rendimento deste ciclo atualizado.")}}><p className="form-hint">Ajuste o rendimento apenas para {monthName(month)} ({cycleRange(month,data.payday)}). Outros ciclos não serão alterados.</p><label>Rendimento deste ciclo (€)<input name="amount" type="number" step="0.01" min="0" defaultValue={(basePeriodIncome/100).toFixed(2)} required/></label><label>Rendimento extra (€)<input name="extra" type="number" step="0.01" min="0" defaultValue="0"/></label><label>Data do rendimento extra<input name="date" type="date" min={month} max={cycleEnd} defaultValue={defaultCycleDate} required/></label><div className="modal-actions"><button type="button" className="button button-light" onClick={()=>{setData(d=>{const incomeByPeriod={...(d.incomeByPeriod||{})};delete incomeByPeriod[month];return {...d,incomeByPeriod}});setModal("");showNotice("Este ciclo voltou a usar o rendimento padrão.")}}>Usar padrão</button><button type="button" className="button button-light" onClick={()=>setModal("")}>Cancelar</button><button className="button button-primary">Guardar ciclo</button></div></form>}
+      {modal==="income"&&<form className="modal-form" onSubmit={saveIncome}>
+        <p className="form-hint">Ajuste o rendimento e a data real de recebimento deste ciclo. Os outros ciclos não serão alterados.</p>
+        <label>Rendimento deste ciclo (€)<input name="amount" type="number" step="0.01" min="0" defaultValue={(basePeriodIncome/100).toFixed(2)} required/></label>
+        <label>Data em que recebeu<input name="receivedDate" type="date" min={month} max={maxReceivedDate} defaultValue={defaultReceivedDate} required/></label>
+        <label>Rendimento extra (€)<input name="extra" type="number" step="0.01" min="0" defaultValue="0"/></label>
+        <label>Data do rendimento extra<input name="date" type="date" min={month} max={cycleEnd} defaultValue={defaultCycleDate} required/></label>
+        <div className="modal-actions">
+          <button type="button" className="button button-light" onClick={()=>{setData(d=>{const incomeByPeriod={...(d.incomeByPeriod||{})};delete incomeByPeriod[defaultReceivedDate];return {...d,incomeByPeriod}});setModal("");showNotice("Este ciclo voltou a usar o rendimento padrão.")}}>Usar padrão</button>
+          <button type="button" className="button button-light" onClick={()=>setModal("")}>Cancelar</button>
+          <button className="button button-primary">Guardar ciclo</button>
+        </div>
+      </form>}
     </section></div>}{notice&&<div className="toast">✓ {notice}</div>}
   </main>;
 }
@@ -542,4 +634,38 @@ function ExpenseTable({ expenses, categories, onEdit, onDelete }: { expenses: Ex
     </tr>;
   })}</tbody></table>{expenses.length===0&&<div className="empty-inline">Ainda não há movimentos para apresentar.</div>}</div>;
 }
-function HistoryChart({ expenses, income, incomeByPeriod, payday, todayDate }: {expenses:Expense[];income:number;incomeByPeriod?:Record<string,number>;payday:number;todayDate:string}) { const months=Array.from({length:6},(_,i)=>periodStartForOffset(todayDate,payday,i-5));const vals=months.map(m=>({month:m,income:periodIncome(income,incomeByPeriod,m)+expenses.filter(e=>periodStartForDate(e.date,payday)===m&&e.type==="income").reduce((a,e)=>a+e.amount,0),spent:expenses.filter(e=>periodStartForDate(e.date,payday)===m&&e.type==="expense").reduce((a,e)=>a+e.amount,0)}));const max=Math.max(...vals.flatMap(v=>[v.income,v.spent]),100);return <div className="history-chart"><div className="chart-y"><span>{money(max)}</span><span>{money(Math.round(max/2))}</span><span>0 €</span></div><div className="chart-bars">{vals.map(v=><div className="month-bars" key={v.month}><div className="bar-area"><div className={`bar spent ${v.spent>v.income?"over":""}`} style={{height:`${Math.max(2,v.spent/max*100)}%`}} title={`Gasto ${money(v.spent)}`}/><div className="bar budget" style={{height:`${Math.max(2,v.income/max*100)}%`}} title={`Rendimento ${money(v.income)}`}/></div><span>{new Intl.DateTimeFormat("pt-PT",{month:"short"}).format(new Date(`${v.month}T12:00:00`))}</span></div>)}</div><div className="chart-legend"><span><i className="spent-key"/>Gastos</span><span><i className="budget-key"/>Rendimento</span></div></div>; }
+function HistoryChart({
+  expenses,
+  income,
+  incomeByPeriod,
+  payday,
+  paydayOverrides,
+  todayDate,
+}: {
+  expenses: Expense[];
+  income: number;
+  incomeByPeriod?: Record<string, number>;
+  payday: number;
+  paydayOverrides?: Record<string, string>;
+  todayDate: string;
+}) {
+  const months = Array.from(
+    { length: 6 },
+    (_, index) => periodStartForOffset(todayDate, payday, index - 5, paydayOverrides),
+  );
+  const vals = months.map((month) => ({
+    month,
+    income: periodIncome(income, incomeByPeriod, month)
+      + expenses.filter((expense) => (
+        periodStartForDate(expense.date, payday, paydayOverrides) === month
+        && expense.type === "income"
+      )).reduce((total, expense) => total + expense.amount, 0),
+    spent: expenses.filter((expense) => (
+      periodStartForDate(expense.date, payday, paydayOverrides) === month
+      && expense.type === "expense"
+    )).reduce((total, expense) => total + expense.amount, 0),
+  }));
+  const max = Math.max(...vals.flatMap((value) => [value.income, value.spent]), 100);
+
+  return <div className="history-chart"><div className="chart-y"><span>{money(max)}</span><span>{money(Math.round(max / 2))}</span><span>0 €</span></div><div className="chart-bars">{vals.map((value) => <div className="month-bars" key={value.month}><div className="bar-area"><div className={`bar spent ${value.spent > value.income ? "over" : ""}`} style={{ height: `${Math.max(2, value.spent / max * 100)}%` }} title={`Gasto ${money(value.spent)}`} /><div className="bar budget" style={{ height: `${Math.max(2, value.income / max * 100)}%` }} title={`Rendimento ${money(value.income)}`} /></div><span>{new Intl.DateTimeFormat("pt-PT", { month: "short" }).format(new Date(`${value.month}T12:00:00`))}</span></div>)}</div><div className="chart-legend"><span><i className="spent-key" />Gastos</span><span><i className="budget-key" />Rendimento</span></div></div>;
+}

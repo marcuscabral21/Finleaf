@@ -76,8 +76,10 @@ Supabase antes de guardar dados reais. O ciclo mensal do painel começa no dia d
 recebimento configurado em **Definições** (individual para cada utilizador) e
 termina no dia anterior ao recebimento seguinte. Dias que não existam num mês,
 como o dia 31 em fevereiro, são ajustados ao último dia desse mês. O rendimento
-pode ser ajustado individualmente em cada ciclo, mantendo o rendimento padrão
-para os restantes. Os gastos fixos lançados num ciclo usam o dia mensal configurado,
+e a data real do recebimento podem ser ajustados individualmente em cada ciclo
+no botão **Ajustar**, mantendo o dia padrão para os ciclos seguintes. A navegação
+permite consultar ciclos anteriores, mas não avança para ciclos futuros. Os gastos
+fixos lançados num ciclo usam o dia mensal configurado,
 com ajuste para o último dia quando esse dia não existe no mês. A app regista
 automaticamente os pagamentos vencidos quando está aberta ou é reaberta e
 deduz os valores do saldo disponível; por ser uma versão local, não executa

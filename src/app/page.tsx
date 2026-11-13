@@ -17,6 +17,16 @@ export default async function HomePage() {
 
   if (!data.user) redirect("/login");
 
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("Não foi possível carregar o nome do perfil.", profileError);
+  }
+
   const { data: financeState, error: financeStateError } = await supabase
     .from("user_finance_state")
     .select("data, revision")
@@ -43,9 +53,17 @@ export default async function HomePage() {
   }
 
   const now = new Date();
+  const metadataName = data.user.user_metadata?.display_name;
+  const displayName = typeof profile?.display_name === "string" && profile.display_name.trim()
+    ? profile.display_name.trim()
+    : typeof metadataName === "string" && metadataName.trim()
+      ? metadataName.trim()
+      : data.user.email?.split("@")[0] ?? "Utilizador";
+
   return (
     <DashboardClient
-      userEmail={data.user.email ?? "Utilizador"}
+      userName={displayName}
+      userEmail={data.user.email ?? ""}
       todayDate={now.toISOString().slice(0, 10)}
       initialFinanceData={financeState.data}
       initialRevision={Number(financeState.revision)}

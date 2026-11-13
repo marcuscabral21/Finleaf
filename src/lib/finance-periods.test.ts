@@ -14,6 +14,15 @@ describe("financial cycles", () => {
     expect(periodStartForOffset("2026-11-24", 25, 1)).toBe("2026-11-25");
   });
 
+  it("uses the actual receipt date for a cycle without changing the configured payday", () => {
+    const overrides = { "2026-11": "2026-11-13" };
+
+    expect(periodStartForDate("2026-11-12", 20, overrides)).toBe("2026-10-20");
+    expect(periodStartForDate("2026-11-13", 20, overrides)).toBe("2026-11-13");
+    expect(periodStartForOffset("2026-11-13", 20, -1, overrides)).toBe("2026-10-20");
+    expect(periodStartForOffset("2026-11-13", 20, 1, overrides)).toBe("2026-12-20");
+  });
+
   it("keeps fixed charges on their scheduled calendar day within each cycle", () => {
     expect(fixedDueDateForPeriod("2026-11-25", 15)).toBe("2026-12-15");
     expect(fixedDueDateForPeriod("2026-11-25", 28)).toBe("2026-11-28");
@@ -27,6 +36,16 @@ describe("financial cycles", () => {
       "2026-12-01",
       "2027-01-01",
     ]);
+  });
+
+  it("keeps fixed charges aligned with an actual receipt-date override", () => {
+    expect(dueFixedDatesFrom(
+      "2026-10-20",
+      1,
+      20,
+      "2026-12-02",
+      { "2026-11": "2026-11-13" },
+    )).toEqual(["2026-11-01", "2026-12-01"]);
   });
 
   it("uses a cycle-specific income without changing the default for other cycles", () => {
